@@ -110,7 +110,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
         let options: NSDictionary = NSDictionary(objects: [NSNumber(value: true as Bool)], forKeys: [CBCentralManagerScanOptionAllowDuplicatesKey as NSCopying])
         
         // Start scanning for devices which advertise the DrinkOn Service UUID
-        centralManager.scanForPeripherals(withServices: [DrinkOnServiceIdentifiers.DrinkOnServiceUUID], options: options as? [String : AnyObject])
+        centralManager.scanForPeripherals(withServices: [DrinkOnServiceIdentifiers.ServiceUUID], options: options as? [String : AnyObject])
         
         print("Scanning Started")
     }
@@ -312,7 +312,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
                 }
             } else {
                 // Create new DrinkOnPeripheral from the connected Peripheral
-                self.drinkOnPeripheral = DrinkOnPeripheral(withPeripheral: peripheral)
+                self.drinkOnPeripheral = DrinkOnPeripheral(peripheral: peripheral)
                 self.drinkOnPeripheral!.startServiceDiscovery()                     // Start Service Discovery
             }
             delegate?.centralManager(self, didConnect: self.drinkOnPeripheral!)

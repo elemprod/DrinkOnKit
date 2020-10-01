@@ -13,11 +13,12 @@
 		5AB22CD12524DE6600197773 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CD02524DE6600197773 /* Assets.xcassets */; };
 		5AB22CD42524DE6600197773 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CD32524DE6600197773 /* Preview Assets.xcassets */; };
 		5AB22CD72524DE6600197773 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CD52524DE6600197773 /* LaunchScreen.storyboard */; };
-		5AB22CE22524E0C100197773 /* DrinkOnKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5AB22CE12524E0C100197773 /* DrinkOnKit */; };
 		5AB22CEA2524E25600197773 /* AppSharedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CE92524E25600197773 /* AppSharedData.swift */; };
 		5AB22CF02524E2A900197773 /* ScannerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CEE2524E2A900197773 /* ScannerRowView.swift */; };
 		5AB22CF12524E2A900197773 /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CEF2524E2A900197773 /* ScannerView.swift */; };
 		5AB22CF42524E2B700197773 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CF32524E2B700197773 /* ConnectView.swift */; };
+		5AB22CFB2524EC7D00197773 /* DrinkOnKit in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CFA2524EC7D00197773 /* DrinkOnKit */; };
+		5AB22CFF2524EC9C00197773 /* DrinkOnKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5AB22CFE2524EC9C00197773 /* DrinkOnKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		5AB22CEE2524E2A900197773 /* ScannerRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScannerRowView.swift; sourceTree = "<group>"; };
 		5AB22CEF2524E2A900197773 /* ScannerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
 		5AB22CF32524E2B700197773 /* ConnectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
+		5AB22CFA2524EC7D00197773 /* DrinkOnKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DrinkOnKit; path = ../..; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,7 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5AB22CE22524E0C100197773 /* DrinkOnKit in Frameworks */,
+				5AB22CFF2524EC9C00197773 /* DrinkOnKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,6 +54,7 @@
 			children = (
 				5AB22CC92524DE6500197773 /* iOS Example */,
 				5AB22CC82524DE6500197773 /* Products */,
+				5AB22CF72524EC1700197773 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -121,6 +124,14 @@
 			path = Scanner;
 			sourceTree = "<group>";
 		};
+		5AB22CF72524EC1700197773 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5AB22CFA2524EC7D00197773 /* DrinkOnKit */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -138,7 +149,7 @@
 			);
 			name = "iOS Example";
 			packageProductDependencies = (
-				5AB22CE12524E0C100197773 /* DrinkOnKit */,
+				5AB22CFE2524EC9C00197773 /* DrinkOnKit */,
 			);
 			productName = "iOS Example";
 			productReference = 5AB22CC72524DE6500197773 /* iOS Example.app */;
@@ -168,7 +179,6 @@
 			);
 			mainGroup = 5AB22CBE2524DE6500197773;
 			packageReferences = (
-				5AB22CE02524E0C100197773 /* XCRemoteSwiftPackageReference "DrinkOnKit" */,
 			);
 			productRefGroup = 5AB22CC82524DE6500197773 /* Products */;
 			projectDirPath = "";
@@ -187,6 +197,7 @@
 				5AB22CD72524DE6600197773 /* LaunchScreen.storyboard in Resources */,
 				5AB22CD42524DE6600197773 /* Preview Assets.xcassets in Resources */,
 				5AB22CD12524DE6600197773 /* Assets.xcassets in Resources */,
+				5AB22CFB2524EC7D00197773 /* DrinkOnKit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,21 +415,9 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		5AB22CE02524E0C100197773 /* XCRemoteSwiftPackageReference "DrinkOnKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/elemprod/DrinkOnKit.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		5AB22CE12524E0C100197773 /* DrinkOnKit */ = {
+		5AB22CFE2524EC9C00197773 /* DrinkOnKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5AB22CE02524E0C100197773 /* XCRemoteSwiftPackageReference "DrinkOnKit" */;
 			productName = DrinkOnKit;
 		};
 /* End XCSwiftPackageProductDependency section */

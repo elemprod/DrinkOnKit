@@ -123,7 +123,7 @@ import CoreBluetooth
         willSet(newState) {
             if stateInternal != newState {
                 DispatchQueue.main.async {
-                    print("***** " + newState.description)
+                    print("** " + newState.description)
                     self.state = newState   // Publish a new state from the main thread
                 }
             }
@@ -138,7 +138,6 @@ import CoreBluetooth
         willSet(newError) {
             if errorInternal != newError {
                 DispatchQueue.main.async {
-                    print("OOOOO " + newError.description)
                     self.error = newError   // Publish a new error from the main thread
                 }
             }

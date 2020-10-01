@@ -18,7 +18,7 @@ public protocol DrinkOnPeripheralDelegate: class {
      * - Parameter peripheral:      The peripheral.
      * - Parameter RSSI:            The updated RSSI value.
      */
-    func peripheral(_ peripheral: DrinkOnPeripheral, didUpdateRSSI RSSI: NSNumber)
+    //func peripheral(_ peripheral: DrinkOnPeripheral, didUpdateRSSI RSSI: NSNumber)
     
     /**
      * The peripheral's DrinkOn BLE Service was discovered.
@@ -34,30 +34,32 @@ public protocol DrinkOnPeripheralDelegate: class {
 @available(iOS 13.0, *)
 public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeripheralDelegate {
     
+    
+    
     /// Supported Service UUID's.
-    fileprivate let serviceUUIDs                                        = [DrinkOnServiceIdentifiers.DrinkOnServiceUUID]
+    fileprivate let serviceUUIDs                                        = [DrinkOnServiceIdentifiers.ServiceUUID]
     
     /// Uniquie ID number for the object
     public let id = UUID()
+    
+    /// DrinkOn BLE Service
+    @Published public internal(set) var drinkOnService : DrinkOnService? = nil
+    
+    /// The CoreBluetooth Peripheral
+    public internal(set) var peripheral : CBPeripheral
     
     /// Is the peripheral connected?
     public var connected : Bool {
         return peripheral.state == .connected
     }
     
-    
-    /// Current bottle level as a percentage (0.0 to 1.0)
-    @Published public internal(set) var level : Double? = nil
-    
-    
-    
     /**
      * The Peripheral Initializer.
      * Note that the DrinkOnPeripheral's delegate must be set to CBPeripheralDelegate after the initializer returns
      * so that the peripheral receives the peripheral delegate callbacks.
      */
-    internal init(withPeripheral peripheral: CBPeripheral) {
-        _peripheral = peripheral
+    internal init(peripheral: CBPeripheral) {
+        self.peripheral = peripheral
         print("Init: \(peripheral)")
     }
     
@@ -65,28 +67,21 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     internal var connectionSucceeded: Bool = false
     
     
-    /// The underlying Bluetooth Peripheral
-    public var peripheral : CBPeripheral {
-        return _peripheral
-    }
-    fileprivate var _peripheral : CBPeripheral
-    
     /// The peripheral's delegate.
     weak var delegate : DrinkOnPeripheralDelegate?
     
-    
-    
+
+
     /**
      * Start Discovery of All Supported Services
      */
     internal func startServiceDiscovery() {
         print("Starting Service Discovery")
-        _peripheral.delegate = self                 // set the peripheral delegate to itself
-        _peripheral.discoverServices(serviceUUIDs)
+        peripheral.delegate = self                 // set the peripheral delegate to itself
+        peripheral.discoverServices(serviceUUIDs)
     }
     
-    /// DrinkOn BLE Service
-    @Published public internal(set) var drinkOnService : DrinkOnService? = nil
+
     
     /// The last BLE signal strength measurement
     public var RSSI : NSNumber? {
@@ -98,7 +93,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
             guard let newRSSI = newValue else {
                 return
             }
-            delegate?.peripheral(self, didUpdateRSSI: newRSSI)
+            //delegate?.peripheral(self, didUpdateRSSI: newRSSI)
         }
     }
     
@@ -113,10 +108,10 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     // Set any invalidated services to nil and attempt to rediscover it.
     public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
         for invalidatedService : CBService in invalidatedServices {
-            if invalidatedService.uuid .isEqual(DrinkOnServiceIdentifiers.DrinkOnServiceUUID) {
+            if invalidatedService.uuid .isEqual(DrinkOnServiceIdentifiers.ServiceUUID) {
                 print("DrinkOn Service Invalidated")
                 drinkOnService = nil
-                peripheral.discoverServices([DrinkOnServiceIdentifiers.DrinkOnServiceUUID])
+                peripheral.discoverServices([DrinkOnServiceIdentifiers.ServiceUUID])
             } else {
                 print("Unrecognized Invalidated Service")
             }
@@ -145,7 +140,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         }
         
         for service : CBService in services {
-            if service.uuid .isEqual(DrinkOnServiceIdentifiers.DrinkOnServiceUUID) {
+            if service.uuid .isEqual(DrinkOnServiceIdentifiers.ServiceUUID) {
                 if drinkOnService == nil {
                     let newService = DrinkOnService(service: service)
                     drinkOnService = newService
