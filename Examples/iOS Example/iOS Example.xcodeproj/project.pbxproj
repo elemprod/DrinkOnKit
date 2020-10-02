@@ -19,6 +19,7 @@
 		5AB22CF42524E2B700197773 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CF32524E2B700197773 /* ConnectView.swift */; };
 		5AB22CFB2524EC7D00197773 /* DrinkOnKit in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CFA2524EC7D00197773 /* DrinkOnKit */; };
 		5AB22CFF2524EC9C00197773 /* DrinkOnKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5AB22CFE2524EC9C00197773 /* DrinkOnKit */; };
+		5AD6489D2527CB5D00CC029D /* ConnectRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		5AB22CEF2524E2A900197773 /* ScannerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
 		5AB22CF32524E2B700197773 /* ConnectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		5AB22CFA2524EC7D00197773 /* DrinkOnKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DrinkOnKit; path = ../..; sourceTree = "<group>"; };
+		5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectRowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +112,7 @@
 		5AB22CEC2524E27300197773 /* Connect */ = {
 			isa = PBXGroup;
 			children = (
+				5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */,
 				5AB22CF32524E2B700197773 /* ConnectView.swift */,
 			);
 			path = Connect;
@@ -212,6 +215,7 @@
 				5AB22CF42524E2B700197773 /* ConnectView.swift in Sources */,
 				5AB22CCB2524DE6500197773 /* AppDelegate.swift in Sources */,
 				5AB22CF02524E2A900197773 /* ScannerRowView.swift in Sources */,
+				5AD6489D2527CB5D00CC029D /* ConnectRowView.swift in Sources */,
 				5AB22CF12524E2A900197773 /* ScannerView.swift in Sources */,
 				5AB22CCD2524DE6500197773 /* SceneDelegate.swift in Sources */,
 				5AB22CCF2524DE6500197773 /* ContentView.swift in Sources */,
