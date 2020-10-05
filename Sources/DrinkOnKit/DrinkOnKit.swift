@@ -81,6 +81,21 @@ import CoreBluetooth
         }
     }
 }
+
+
+/// DrinkOnKit Delegate
+@available(iOS 13.0, *)
+public protocol DrinkOnKitDelegate: class {
+    
+    /**
+     * Connected to a DrinkOnPeripheral
+     *
+     * - Parameter drinkOnKit:              The DrinkOnKit.
+     * - Parameter drinkOnPeriperal:        The Connected Peripheral
+     */
+    func drinkOnKit(_ drinkOnKit: DrinkOnKit, didConnect : DrinkOnPeripheral)
+}
+
 /*
  * A high level Library Module for acessing DrinkOn Peripherals via Bluetooth Low Energy
  *
@@ -114,6 +129,9 @@ import CoreBluetooth
     
     /// Shared Instance
     public static let sharedInstance = DrinkOnKit()
+    
+    /// DrinkOnKit Delegate
+    public weak var delegate : DrinkOnKitDelegate?
     
     /// The public library state.  Published on the main thread on stateInternal change.
     @Published public var state : DrinkOnKitState = DrinkOnKitState.unknown
@@ -314,14 +332,32 @@ import CoreBluetooth
         if(self.error == .busyScanning || self.error == .busyConnecting || self.error == .busyConnected) {
             self.errorInternal = .none
         }
+        DispatchQueue.main.async {
+            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral) {
+                scannedDrinkOnPeripheral.peripheral.connected = false;   // Update the matching scanned peripheral connection state
+            }
+            if let drinkOnPeripheral : DrinkOnPeripheral = self.drinkOnPeripheral {
+                if drinkOnPeripheral.peripheral === peripheral {
+                    drinkOnPeripheral.connected = false
+                }
+            }
+            
+        }
     }
     
     internal func centralManager(_ manager: CentralManager, didConnect peripheral: DrinkOnPeripheral) {
-        DispatchQueue.main.async {
-            self.drinkOnPeripheral = peripheral
-        }
         stateInternal = .connected
         errorInternal = .none
+        
+        DispatchQueue.main.async {
+            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral.peripheral) {
+                scannedDrinkOnPeripheral.peripheral.connected = true;   // Update the matching scanned peripheral connection state
+            }
+            self.drinkOnPeripheral = peripheral
+            self.drinkOnPeripheral?.connected = true
+            self.delegate?.drinkOnKit(self, didConnect: peripheral)
+        }
+
     }
     
     

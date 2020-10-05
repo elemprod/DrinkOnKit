@@ -26,32 +26,73 @@ public protocol DrinkOnPeripheralDelegate: class {
      * - Parameter peripheral:      The Peripheral.
      * - Parameter service:         The DrinkOn Service.
      */
-    func peripheral(_ peripheral: DrinkOnPeripheral, didDiscoverDrinkOnService service: DrinkOnService)
+    //func peripheral(_ peripheral: DrinkOnPeripheral, didDiscoverDrinkOnService service: DrinkOnService)
     
 }
 
-/// Data Object representing a single DrinkOn BLE Peripheral
+/// Data Object representing a DrinkOn BLE Peripheral
 @available(iOS 13.0, *)
-public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeripheralDelegate {
+public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeripheralDelegate, DrinkOnServiceDelegate {
     
+    /// Uniquie ID number for the object
+    public let id = UUID()
+    
+    /// Is the peripheral currently connected?
+    @Published public internal(set) var connected :Bool = false
+    
+    /// The Current bottle level as a Percentage (0 to 100)
+    @Published public internal(set) var bottleLevel : Int? = nil
+
+    /// The Current bottle Level Sensor in Raw Counts.
+    @Published public internal(set) var levelSensor : Int? = nil
+    
+    /// The sum of the liquid consumed in the previous 24 hour period with units of Bottles.
+    @Published public internal(set) var consumed24hr : Float? = nil
+    
+    /// The peripheral's current UI State Code.
+    @Published public internal(set) var UIStateCode : Int? = nil
+    
+    /// The user programmable liquid consumption goal per 24 hour period with units of Bottles.
+    @Published public internal(set) var goal24hr : Float? = nil
+    
+    /// Function for setting a new 24 hr liquid consumption gload with units of Bottls.
+    public func goal24hrSet(goal : Float) {
+        //TODO
+        
+    }
+    /// The peripheral's raw liquid level sensor with units of Sensor Counts. Read Only
+    @Published public internal(set) var liquidLevelRaw : Int? = nil
+    
+    /// Battery Level as a Percentage (0 to 100) Read Only
+    @Published public internal(set) var batteryLevel : Int? = nil
+    
+    /// The peripheral's total runtime in Hours.  Read Only
+    @Published public internal(set) var runTime : Int? = nil
+    
+    /// The peripheral's firmware version string in Major.Minor format.  Read Only
+    @Published public internal(set) var firmwareVersion : String? = nil
+
+    /// The peripheral's DFU version code  Read Only
+    @Published public internal(set) var dfuCode : Int? = nil
+    
+    /// The peripheral's model number.  Read Only
+    @Published public internal(set) var modelCode : Int? = nil
+    
+    /// The peripheral's hardware verison letter.  Read Only
+    @Published public internal(set) var hardwareCode : String? = nil
+    
+    /// An array of the user's water consumption for each of the previous hours with Units of Bottles consumed per Hour.  Read Only
+    @Published public internal(set) var consumed : [Float] = []
     
     
     /// Supported Service UUID's.
     fileprivate let serviceUUIDs                                        = [DrinkOnServiceIdentifiers.ServiceUUID]
     
-    /// Uniquie ID number for the object
-    public let id = UUID()
-    
     /// DrinkOn BLE Service
-    @Published public internal(set) var drinkOnService : DrinkOnService? = nil
+    public var drinkOnService : DrinkOnService? = nil
     
     /// The CoreBluetooth Peripheral
     public internal(set) var peripheral : CBPeripheral
-    
-    /// Is the peripheral connected?
-    public var connected : Bool {
-        return peripheral.state == .connected
-    }
     
     /**
      * The Peripheral Initializer.
@@ -66,12 +107,9 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     // Was the connection attempt sucessful?
     internal var connectionSucceeded: Bool = false
     
-    
     /// The peripheral's delegate.
     weak var delegate : DrinkOnPeripheralDelegate?
     
-
-
     /**
      * Start Discovery of All Supported Services
      */
@@ -80,8 +118,6 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         peripheral.delegate = self                 // set the peripheral delegate to itself
         peripheral.discoverServices(serviceUUIDs)
     }
-    
-
     
     /// The last BLE signal strength measurement
     public var RSSI : NSNumber? {
@@ -102,7 +138,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     // Device Name Updated
     public func peripheralDidUpdateName(_ peripheral: CBPeripheral) {
         
-        // TODO call delegate
+        // TODO update name
     }
     
     // Set any invalidated services to nil and attempt to rediscover it.
@@ -141,10 +177,10 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         
         for service : CBService in services {
             if service.uuid .isEqual(DrinkOnServiceIdentifiers.ServiceUUID) {
-                if drinkOnService == nil {
+                if self.drinkOnService == nil {
                     let newService = DrinkOnService(service: service)
-                    drinkOnService = newService
-                    delegate?.peripheral(self, didDiscoverDrinkOnService: newService)
+                    self.drinkOnService = newService
+                    self.drinkOnService?.delegate = self
                     print("DrinkOn Service discovered")
                 }
             } else {
@@ -235,4 +271,51 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         print("didDiscoverDescriptorsFor Shouldn't be Called")
     }
     
+    
+    //MARK: DrinkOnService Delegate
+    func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar data: DrinkOnServiceStatusCharData) {
+        DispatchQueue.main.async {
+            if(self.goal24hr != data.goal24hr ) {
+                self.goal24hr = data.goal24hr
+            }
+            if(self.bottleLevel != data.bottleLevel) {
+                self.bottleLevel = data.bottleLevel
+                print("Bottle Level Update: " + String(data.bottleLevel))
+            }
+            if(self.consumed24hr != data.consumed24hr) {
+                self.consumed24hr = data.consumed24hr
+            }
+            if(self.UIStateCode != data.UIStateCode) {
+                self.UIStateCode = data.UIStateCode
+            }
+            if(self.batteryLevel != data.batteryLevel) {
+                self.batteryLevel = data.batteryLevel
+            }
+            if(self.runTime != data.runTime) {
+                self.runTime = data.runTime
+            }
+        }
+    }
+    
+    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar levelSensor: Int) {
+        if(self.levelSensor != levelSensor) {
+            DispatchQueue.main.async {
+                self.levelSensor = levelSensor
+            }
+        }
+    }
+    
+    func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar data: DrinkOnServiceInfoCharData) {
+        // Don't need check if changed since the char is only read once
+        DispatchQueue.main.async {
+            self.firmwareVersion = data.firmwareVersion
+            self.dfuCode = data.dfuCode
+            self.modelCode = data.modelCode
+            self.hardwareCode = data.hardwareCode
+        }
+    }
+    
+    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar consumed: [Float]) {
+        //TODO
+    }
 }

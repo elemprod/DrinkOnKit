@@ -34,6 +34,10 @@ public class ScannedDrinkOnPeripheral: Identifiable, ObservableObject {
     @Published public internal(set) var consumed24hrs : Double? = nil
     
     /// Is the peripheral currently connected?
+    @Published public internal(set) var connected :Bool = false
+    
+    /*
+    
     public var connected : Bool {
         get {
             guard let peripheralState = peripheral?.state else {
@@ -42,6 +46,7 @@ public class ScannedDrinkOnPeripheral: Identifiable, ObservableObject {
             return (peripheralState == .connected)
         }
     }
+ */
     
     /// BLE Device Name of the Scanned Peripheral
     public var name: String {

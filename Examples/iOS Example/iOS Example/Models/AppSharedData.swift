@@ -24,10 +24,14 @@ final class AppSharedData: ObservableObject {
     
     //@Published var bottleLevel : Int = DrinkOnKit.sharedInstance.drinkOnPeripheral?.drinkOnService?.bottleLevel
     
-    var cancellable = DrinkOnKit.sharedInstance.drinkOnPeripheral?.objectWillChange
+    /*
+    let drinkOnPeripheral : DrinkOnPeripheral? = DrinkOnKit.sharedInstance.drinkOnPeripheral
+    var cancellable = drinkOnPeripheral.objectWillChange
         .sink { _ in
-            print("** Peripheral " + DrinkOnKit.sharedInstance.drinkOnPeripheral.debugDescription)
+            print("******* Peripheral " + DrinkOnKit.sharedInstance.drinkOnPeripheral.debugDescription)
     }
+    */
+    
     
     /// Currently Scanning for DrinkOn Peripherals?
     @Published var scanning = false {  // currently scanning?
@@ -40,8 +44,6 @@ final class AppSharedData: ObservableObject {
             }
         }
     }
-    
-
     
     public init() {
         let notificationCenter = NotificationCenter.default

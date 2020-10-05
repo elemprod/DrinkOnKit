@@ -17,43 +17,40 @@ struct ScannerView: View {
     
     @ObservedObject var drinkOnKit :  DrinkOnKit = DrinkOnKit.sharedInstance
     
+
     var body: some View {
         NavigationView() {
-            VStack{
+            VStack {
                 
                 Toggle(isOn: $appSharedData.scanning) {
                     Text("Scan")
                 }
                 
                 List(scannedPeripherals.peripherals) { peripheral in
-                    NavigationLink(destination: ConnectView()
-                                    .environmentObject(appSharedData)
-                                    .environmentObject(peripheral)) {
+                    
+                    // Show the detail disclousre if connected
+                    if peripheral.connected, let drinkOnPeripheral : DrinkOnPeripheral = DrinkOnKit.sharedInstance.drinkOnPeripheral {
+                        NavigationLink(destination: DrinkOnPeripheralView()
+                                        .environmentObject(drinkOnPeripheral)) {
+                            ScannerRowView()
+                                .environmentObject(peripheral)
+                        }
+                    } else {
                         ScannerRowView()
                             .environmentObject(appSharedData)
                             .environmentObject(peripheral)
                     }
+
+                    /*
+                    NavigationLink(destination: ConnectView()
+                                    .environmentObject(peripheral)) {
+                        ScannerRowView()
+                            .environmentObject(peripheral)
+                    }
+                     */
                 }
                 
-                /*
-                 
-                 List {
-                 
-                 ForEach(scannedPeripherals.peripherals) { peripheral in
-                 
-                 NavigationLink(
-                 destination: ConnectView().environmentObject(self.scannedDrinkOnPeripheral),
-                 label: {
-                 /*@START_MENU_TOKEN@*/Text("Navigate")/*@END_MENU_TOKEN@*/
-                 }) {
-                 ScannerRowView()
-                 .environmentObject(appSharedData)
-                 .environmentObject(peripheral)
-                 }
-                 
-                 }
-                 }
-                 */
+                
                 
                 Text(drinkOnKit.error.description)
                     .frame(alignment: .leading)

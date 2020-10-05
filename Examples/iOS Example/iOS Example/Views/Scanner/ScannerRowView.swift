@@ -38,10 +38,27 @@ extension ScannedDrinkOnPeripheral {
 }
 
 struct ScannerRowView: View {
-
+    
     @EnvironmentObject var appSharedData : AppSharedData
     
     @EnvironmentObject var scannedDrinkOnPeripheral: ScannedDrinkOnPeripheral
+    
+    // Function for connecting to the scanned peripheral
+    func connectDrinkOn() {
+        
+        guard let peripheral : CBPeripheral = scannedDrinkOnPeripheral.peripheral else {
+            return
+        }
+        appSharedData.scanning = false;
+        DrinkOnKit.sharedInstance.connectPeripheral(peripheral)
+    }
+    
+    // Function for disconnecting a connected peripheral
+    func disconnectDrinkOn() {
+        
+        DrinkOnKit.sharedInstance.disconnectPeripheral()
+    }
+    
     
     var body: some View {
         HStack {
@@ -59,6 +76,21 @@ struct ScannerRowView: View {
                 }
             }
             
+            if scannedDrinkOnPeripheral.connected  {
+                Text("Connected")
+                //Button("Disconnect", action: disconnectDrinkOn)
+            } else {
+                Button("Connect", action: connectDrinkOn)
+            }
+            /*
+            if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.disconnected {
+                Button("Connect", action: connectDrinkOn)
+            } else if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.connecting {
+                Text("Connecting")
+            } else if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.connected {
+                
+            }
+ */
             Spacer()
         }
 

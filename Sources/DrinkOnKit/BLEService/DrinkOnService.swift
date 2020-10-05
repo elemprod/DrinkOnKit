@@ -31,20 +31,6 @@ internal class DrinkOnServiceIdentifiers: NSObject {
     static let LogCharUUID                          = CBUUID(string: LogCharUUIDString)
 }
 
-/// Service Delegate
-@available(iOS 13.0, *)
-public protocol DrinkOnServiceDelegate: class {
-    
-    
-    /**
-     * The Level Characteristics was discovered.
-     *
-     * - Parameter service:                 The service.
-     * - Parameter valid:                   True if the characteristics are valid.
-     */
-    func drinkOnService(_ service: DrinkOnService, levelCharValid : Bool)
-}
-
 /**
  * Bit array enumeration for storing the BLE status for the DrinkOn Service Chracateristics.
  * Used to protect the device from too frequent BLE's accesses and validating characteristics.
@@ -81,61 +67,95 @@ fileprivate struct DrinkOnServiceCharState: OptionSet {
     
 }
 
+/// Status Characteristic Data
+internal struct DrinkOnServiceStatusCharData {
+    /// The user programmable liquid consumption goal per 24 hour period with units of Bottles.
+    let goal24hr : Float
+    
+    /// The Current bottle level as a Percentage (0 to 100)
+    let bottleLevel : Int
 
-@available(iOS 13.0, *)
-public class DrinkOnService: ObservableObject {
-    
-    
-    /// The Current bottle level as a Percentage (0 to 100)  Read Only
-    @Published public internal(set) var bottleLevel : Int? = nil
-
-    /// The Current bottle Level Sensor in Raw Counts.  Read Only
-    @Published public internal(set) var levelSensor : Int? = nil
-    
-    /// The sum of the liquid consumed in the previous 24 hour period with units of Bottles. Read Only
-    @Published public internal(set) var consumed24hr : Float? = nil
-    
-    /// The user programmable liquid consumption goal per 24 hour period with units of Bottles.  Read & Write
-    @Published public var goal24hr : Float? = nil
-    
-    /// The peripheral's raw liquid level sensor with units of Sensor Counts. Read Only
-    @Published public internal(set) var liquidLevelRaw : Int? = nil
-    
-    /// Battery Level as a Percentage (0 to 100) Read Only
-    @Published public internal(set) var batteryLevel : Int? = nil
-    
-    /// The peripheral's total runtime in Hours.  Read Only
-    @Published public internal(set) var runTime : Int? = nil
-    
-    /// The peripheral's firmware version string in Major.Minor format.  Read Only
-    @Published public internal(set) var firmwareVersion : String? = nil
-
-    /// The peripheral's DFU version code  Read Only
-    @Published public internal(set) var dfuCode : Int? = nil
-    
-    /// The peripheral's model number.  Read Only
-    @Published public internal(set) var modelCode : Int? = nil
-    
-    /// The peripheral's hardware verison letter.  Read Only
-    @Published public internal(set) var hardwareCode : String? = nil
+    /// The sum of the liquid consumed in the previous 24 hour period with units of Bottles.
+    let consumed24hr : Float
     
     /// The peripheral's current UI State Code.  Read Only
-    @Published public internal(set) var UIStateCode : Int? = nil
+    let UIStateCode : Int
     
-    /// An array of the user's water consumption for each of the previous hours with Units of Bottles consumed per Hour.  Read Only
-    @Published public internal(set) var consumed : [Float] = []
+    /// Battery Level as a Percentage (0 to 100) Read Only
+    let batteryLevel : Int
     
+    /// The peripheral's total runtime in Hours.  Read Only
+    let runTime : Int
+}
+
+/// Info Characteristic Data
+internal struct DrinkOnServiceInfoCharData {
+
+    /// The peripheral's firmware version string in Major.Minor format.
+    let firmwareVersion : String
+
+    /// The peripheral's DFU version code.
+    let dfuCode : Int
     
+    /// The peripheral's model number.
+    let modelCode : Int
+    
+    /// The peripheral's hardware verison letter.
+    let hardwareCode : String
+}
+
+
+/// Service Delegate
+@available(iOS 10.0, *)
+internal protocol DrinkOnServiceDelegate: class {
+    
+    /**
+     * The Status Characteristic was updated.
+     *
+     * - Parameter service:                 The service.
+     * - Parameter Data:                    The updated Data
+     */
+    func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar  data : DrinkOnServiceStatusCharData)
+    
+
+    /**
+     * The Raw Level Sensor Characteristic was updated.
+     *
+     * - Parameter service:                 The service.
+     * - Parameter levelSensor:             The updated bottle Level Sensor in Raw Counts
+     */
+    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar  levelSensor : Int)
+    
+    /**
+     * The Info Characteristic was updated.
+     *
+     * - Parameter service:                 The service.
+     * - Parameter Data:                    The updated Data
+     */
+    func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar  data : DrinkOnServiceInfoCharData)
+    
+    /**
+     * The Log Characteristic was updated.
+     *
+     * - Parameter service:                 The service.
+     * - Parameter consumed:                The updated array of the user's water consumption for each of the previous hours with Units of Bottles consumed per Hour.
+     */
+    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar consumed : [Float])
+}
+
+
+@available(iOS 10.0, *)
+public class DrinkOnService {
+        
     /// The Bluetooth Peripheral for the service.
-    public var peripheral : CBPeripheral {
+    internal var peripheral : CBPeripheral {
         get {
             return service.peripheral
         }
     }
     
-    
     /// The Service Delegate.
-    public weak var delegate : DrinkOnServiceDelegate?
+    internal weak var delegate : DrinkOnServiceDelegate?
     
     /// Service and Characteristic References
     internal var service                        : CBService
@@ -165,6 +185,7 @@ public class DrinkOnService: ObservableObject {
         }
     }
     
+    
     /**
      * Function for updating the observable variables with updated Status Characteristic data
      *  - returns: true if the update was sucessful else false.
@@ -178,7 +199,7 @@ public class DrinkOnService: ObservableObject {
               data.count == 10,
               let newGoal24hr24hrRaw : Int8 = data.int8ValueAt(index: 0),
               let newBottleLevelRaw : Int8 = data.int8ValueAt(index: 1),
-              let newConsumed24hr : Float = data.floatValueAt(index: 2),
+              let newConsumed24hrRaw : Float = data.floatValueAt(index: 2),
               let newUIStateCodeRaw : UInt8 = data.uint8ValueAt(index: 6),
               let newBatteryLevelRaw : Int8 = data.int8ValueAt(index: 7),
               let newRunTimeRaw : UInt16 = data.uint16ValueAt(index: 8)
@@ -186,36 +207,17 @@ public class DrinkOnService: ObservableObject {
                 print("Status Characteristic Update Failed")
                 return false
             }
-        
-        // Scale the Raw Values and convert to Observable Data Types
-        let newGoal24hr : Float = Float(newGoal24hr24hrRaw / 10)
-        let newBottleLevel : Int = Int(newBottleLevelRaw)
-        let newUIStateCode : Int = Int(newUIStateCodeRaw)
-        let newBatteryLevel : Int = Int(newBatteryLevelRaw)
-        let newRunTime : Int = Int(newRunTimeRaw)
-        
-
-        DispatchQueue.main.async {
-            if(self.goal24hr != newGoal24hr ) {
-                self.goal24hr = newGoal24hr
-            }
-            if(self.bottleLevel != newBottleLevel) {
-                self.bottleLevel = newBottleLevel
-                print("Bottle Level Update: " + String(newBottleLevel))
-            }
-            if(self.consumed24hr != newConsumed24hr) {
-                self.consumed24hr = newConsumed24hr
-            }
-            if(self.UIStateCode != newUIStateCode) {
-                self.UIStateCode = newUIStateCode
-            }
-            if(self.batteryLevel != newBatteryLevel) {
-                self.batteryLevel = newBatteryLevel
-            }
-            if(self.runTime != newRunTime) {
-                self.runTime = newRunTime
-            }
-        }
+    
+        // Scale and store the the Raw Values
+        let statusData : DrinkOnServiceStatusCharData
+            = DrinkOnServiceStatusCharData(goal24hr: Float(newGoal24hr24hrRaw / 10),
+                                           bottleLevel: Int(newBottleLevelRaw),
+                                           consumed24hr: newConsumed24hrRaw,
+                                           UIStateCode: Int(newUIStateCodeRaw),
+                                           batteryLevel: Int(newBatteryLevelRaw),
+                                           runTime: Int(newRunTimeRaw))
+        // Make the delegate call with the updated data
+        delegate?.drinkOnService(self, didUpdateStatusChar: statusData)
         return true
     }
     
@@ -253,13 +255,7 @@ public class DrinkOnService: ObservableObject {
             return false
         }
         
-        let newLevelSensor : Int = Int(newLevelSensorRaw)
-        
-        if(self.levelSensor != newLevelSensor) {
-            DispatchQueue.main.async {
-                self.levelSensor = newLevelSensor
-            }
-        }
+        delegate?.drinkOnService(self, didUpdateLevelSensorChar: Int(newLevelSensorRaw))
         return true
     }
     
@@ -282,7 +278,7 @@ public class DrinkOnService: ObservableObject {
     }
     
     /**
-     * Function for updating the observable variables with the updated0 Info Characteristic data
+     * Function for updating the observable variables with the updated Info Characteristic data
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processInfoCharUpdate() -> Bool {
@@ -302,26 +298,16 @@ public class DrinkOnService: ObservableObject {
                 return false
             }
         
-        // Convert to Observable Data Types
-        let newFirmwareVer : String = String(newFirmwareMajorVerRaw) + "." + String(newFirmwareMinorVerRaw)
-        let newDFUCode: Int = Int(newDFUCodeRaw)
-        let newModelCode : Int = Int(newModelCodeRaw)
-        let newHardwareCode : String = String(UnicodeScalar(newHardwareCodeRaw))
-        
-        // Don't to check if changed since the char is only read once
-        DispatchQueue.main.async {
-            self.firmwareVersion = newFirmwareVer
-            self.dfuCode = newDFUCode
-            self.modelCode = newModelCode
-            self.hardwareCode = newHardwareCode
-            
-            }
+        let infoCharData : DrinkOnServiceInfoCharData = DrinkOnServiceInfoCharData(
+            firmwareVersion: String(newFirmwareMajorVerRaw) + "." + String(newFirmwareMinorVerRaw),
+            dfuCode: Int(newDFUCodeRaw),
+            modelCode: Int(newModelCodeRaw),
+            hardwareCode: String(UnicodeScalar(newHardwareCodeRaw)))
+
+        self.delegate?.drinkOnService(self, didUpdateInfoChar: infoCharData)
         return true
     }
-    
-    //update status and log char functions
-    
-    
+
     /**
      * Function for initiating a BLE Read of the Log Characteristic Value
      *  - returns: true if the service was previously discovered and has read access, else false.
@@ -350,9 +336,7 @@ public class DrinkOnService: ObservableObject {
         self.service = service
         charState = []
         
-        //TODO don't discover the characteristics until accessed to save BLE traffic??
-        
-        // Discover all of the Service Characteristics
+        // Discover all of the Service Characteristics at Init
         let characteristics = [DrinkOnServiceIdentifiers.StatusCharUUID, DrinkOnServiceIdentifiers.LevelSensorCharUUID, DrinkOnServiceIdentifiers.InfoCharUUID, DrinkOnServiceIdentifiers.LogCharUUID]
         service.peripheral.discoverCharacteristics(characteristics, for: service)
     }
