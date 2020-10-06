@@ -323,6 +323,12 @@ public protocol DrinkOnKitDelegate: class {
             self.stateInternal = .ready         // clear the connecting / connected states
         }
         self.errorInternal = .connectionFailed
+        DispatchQueue.main.async {
+            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral) {
+                scannedDrinkOnPeripheral.peripheral.connected = false;   // Update the matching scanned peripheral connection state
+            }
+            self.drinkOnPeripheral?.state = peripheral.state
+        }
     }
     
     internal func centralManager(_ manager: CentralManager, didDisconnect peripheral: CBPeripheral) {
@@ -336,12 +342,7 @@ public protocol DrinkOnKitDelegate: class {
             if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral) {
                 scannedDrinkOnPeripheral.peripheral.connected = false;   // Update the matching scanned peripheral connection state
             }
-            if let drinkOnPeripheral : DrinkOnPeripheral = self.drinkOnPeripheral {
-                if drinkOnPeripheral.peripheral === peripheral {
-                    drinkOnPeripheral.connected = false
-                }
-            }
-            
+            self.drinkOnPeripheral?.state = peripheral.state
         }
     }
     
@@ -354,7 +355,7 @@ public protocol DrinkOnKitDelegate: class {
                 scannedDrinkOnPeripheral.peripheral.connected = true;   // Update the matching scanned peripheral connection state
             }
             self.drinkOnPeripheral = peripheral
-            self.drinkOnPeripheral?.connected = true
+            self.drinkOnPeripheral?.state = peripheral.state
             self.delegate?.drinkOnKit(self, didConnect: peripheral)
         }
 

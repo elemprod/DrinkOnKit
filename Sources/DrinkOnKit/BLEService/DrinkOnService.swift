@@ -67,42 +67,6 @@ fileprivate struct DrinkOnServiceCharState: OptionSet {
     
 }
 
-/// Status Characteristic Data
-internal struct DrinkOnServiceStatusCharData {
-    /// The user programmable liquid consumption goal per 24 hour period with units of Bottles.
-    let goal24hr : Float
-    
-    /// The Current bottle level as a Percentage (0 to 100)
-    let bottleLevel : Int
-
-    /// The sum of the liquid consumed in the previous 24 hour period with units of Bottles.
-    let consumed24hr : Float
-    
-    /// The peripheral's current UI State Code.  Read Only
-    let UIStateCode : Int
-    
-    /// Battery Level as a Percentage (0 to 100) Read Only
-    let batteryLevel : Int
-    
-    /// The peripheral's total runtime in Hours.  Read Only
-    let runTime : Int
-}
-
-/// Info Characteristic Data
-internal struct DrinkOnServiceInfoCharData {
-
-    /// The peripheral's firmware version string in Major.Minor format.
-    let firmwareVersion : String
-
-    /// The peripheral's DFU version code.
-    let dfuCode : Int
-    
-    /// The peripheral's model number.
-    let modelCode : Int
-    
-    /// The peripheral's hardware verison letter.
-    let hardwareCode : String
-}
 
 
 /// Service Delegate
@@ -115,7 +79,7 @@ internal protocol DrinkOnServiceDelegate: class {
      * - Parameter service:                 The service.
      * - Parameter Data:                    The updated Data
      */
-    func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar  data : DrinkOnServiceStatusCharData)
+    func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar  data : DrinkOnStatusCharacteristic)
     
 
     /**
@@ -132,7 +96,7 @@ internal protocol DrinkOnServiceDelegate: class {
      * - Parameter service:                 The service.
      * - Parameter Data:                    The updated Data
      */
-    func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar  data : DrinkOnServiceInfoCharData)
+    func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar  data : DrinkOnInfoCharacteristic)
     
     /**
      * The Log Characteristic was updated.
@@ -209,8 +173,8 @@ public class DrinkOnService {
             }
     
         // Scale and store the the Raw Values
-        let statusData : DrinkOnServiceStatusCharData
-            = DrinkOnServiceStatusCharData(goal24hr: Float(newGoal24hr24hrRaw / 10),
+        let statusData : DrinkOnStatusCharacteristic
+            = DrinkOnStatusCharacteristic(goal24hr: Float(newGoal24hr24hrRaw / 10),
                                            bottleLevel: Int(newBottleLevelRaw),
                                            consumed24hr: newConsumed24hrRaw,
                                            UIStateCode: Int(newUIStateCodeRaw),
@@ -298,11 +262,12 @@ public class DrinkOnService {
                 return false
             }
         
-        let infoCharData : DrinkOnServiceInfoCharData = DrinkOnServiceInfoCharData(
+        let infoCharData : DrinkOnInfoCharacteristic = DrinkOnInfoCharacteristic(
             firmwareVersion: String(newFirmwareMajorVerRaw) + "." + String(newFirmwareMinorVerRaw),
             dfuCode: Int(newDFUCodeRaw),
             modelCode: Int(newModelCodeRaw),
-            hardwareCode: String(UnicodeScalar(newHardwareCodeRaw)))
+            hardwareCode: String(UnicodeScalar(newHardwareCodeRaw))
+        )
 
         self.delegate?.drinkOnService(self, didUpdateInfoChar: infoCharData)
         return true

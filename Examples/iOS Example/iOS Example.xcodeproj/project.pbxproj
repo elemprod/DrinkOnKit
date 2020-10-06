@@ -16,11 +16,11 @@
 		5AB22CEA2524E25600197773 /* AppSharedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CE92524E25600197773 /* AppSharedData.swift */; };
 		5AB22CF02524E2A900197773 /* ScannerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CEE2524E2A900197773 /* ScannerRowView.swift */; };
 		5AB22CF12524E2A900197773 /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CEF2524E2A900197773 /* ScannerView.swift */; };
-		5AB22CF42524E2B700197773 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB22CF32524E2B700197773 /* ConnectView.swift */; };
 		5AB22CFB2524EC7D00197773 /* DrinkOnKit in Resources */ = {isa = PBXBuildFile; fileRef = 5AB22CFA2524EC7D00197773 /* DrinkOnKit */; };
 		5AB22CFF2524EC9C00197773 /* DrinkOnKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5AB22CFE2524EC9C00197773 /* DrinkOnKit */; };
 		5ABF1891252B7E5A005219A7 /* DrinkOnPeripheralView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */; };
-		5AD6489D2527CB5D00CC029D /* ConnectRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */; };
+		5ABF1897252CBB66005219A7 /* InfoCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */; };
+		5ABF189C252CC9E2005219A7 /* StatusCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,10 +35,10 @@
 		5AB22CE92524E25600197773 /* AppSharedData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppSharedData.swift; sourceTree = "<group>"; };
 		5AB22CEE2524E2A900197773 /* ScannerRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScannerRowView.swift; sourceTree = "<group>"; };
 		5AB22CEF2524E2A900197773 /* ScannerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
-		5AB22CF32524E2B700197773 /* ConnectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		5AB22CFA2524EC7D00197773 /* DrinkOnKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DrinkOnKit; path = ../..; sourceTree = "<group>"; };
 		5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrinkOnPeripheralView.swift; sourceTree = "<group>"; };
-		5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectRowView.swift; sourceTree = "<group>"; };
+		5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoCharacteristicView.swift; sourceTree = "<group>"; };
+		5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusCharacteristicView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,19 +106,19 @@
 			isa = PBXGroup;
 			children = (
 				5AB22CED2524E28100197773 /* Scanner */,
-				5AB22CEC2524E27300197773 /* Connect */,
+				5AB22CEC2524E27300197773 /* Connected */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		5AB22CEC2524E27300197773 /* Connect */ = {
+		5AB22CEC2524E27300197773 /* Connected */ = {
 			isa = PBXGroup;
 			children = (
 				5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */,
-				5AD6489C2527CB5D00CC029D /* ConnectRowView.swift */,
-				5AB22CF32524E2B700197773 /* ConnectView.swift */,
+				5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */,
+				5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */,
 			);
-			path = Connect;
+			path = Connected;
 			sourceTree = "<group>";
 		};
 		5AB22CED2524E28100197773 /* Scanner */ = {
@@ -215,14 +215,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				5AB22CEA2524E25600197773 /* AppSharedData.swift in Sources */,
-				5AB22CF42524E2B700197773 /* ConnectView.swift in Sources */,
 				5AB22CCB2524DE6500197773 /* AppDelegate.swift in Sources */,
 				5AB22CF02524E2A900197773 /* ScannerRowView.swift in Sources */,
-				5AD6489D2527CB5D00CC029D /* ConnectRowView.swift in Sources */,
 				5ABF1891252B7E5A005219A7 /* DrinkOnPeripheralView.swift in Sources */,
 				5AB22CF12524E2A900197773 /* ScannerView.swift in Sources */,
 				5AB22CCD2524DE6500197773 /* SceneDelegate.swift in Sources */,
+				5ABF189C252CC9E2005219A7 /* StatusCharacteristicView.swift in Sources */,
 				5AB22CCF2524DE6500197773 /* ContentView.swift in Sources */,
+				5ABF1897252CBB66005219A7 /* InfoCharacteristicView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
