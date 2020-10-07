@@ -76,8 +76,8 @@ internal protocol DrinkOnServiceDelegate: class {
     /**
      * The Status Characteristic was updated.
      *
-     * - Parameter service:                 The service.
-     * - Parameter Data:                    The updated Data
+     * - Parameter service:                 The DrinkOnService.
+     * - Parameter data:                    The updated Data
      */
     func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar  data : DrinkOnStatusCharacteristic)
     
@@ -85,26 +85,26 @@ internal protocol DrinkOnServiceDelegate: class {
     /**
      * The Raw Level Sensor Characteristic was updated.
      *
-     * - Parameter service:                 The service.
-     * - Parameter levelSensor:             The updated bottle Level Sensor in Raw Counts
+     * - Parameter service:                 The DrinkOnService.
+     * - Parameter data:                     The updated Characteristic Data
      */
-    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar  levelSensor : Int)
+    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar  data : DrinkOnLevelSensorCharacteristic)
     
     /**
      * The Info Characteristic was updated.
      *
-     * - Parameter service:                 The service.
-     * - Parameter Data:                    The updated Data
+     * - Parameter service:                 The DrinkOnService.
+     * - Parameter data:                    The updated Characteristic Data
      */
     func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar  data : DrinkOnInfoCharacteristic)
     
     /**
      * The Log Characteristic was updated.
      *
-     * - Parameter service:                 The service.
-     * - Parameter consumed:                The updated array of the user's water consumption for each of the previous hours with Units of Bottles consumed per Hour.
+     * - Parameter service:                 The DrinkOnService.
+     * - Parameter data:                    The updated Characteristic Data
      */
-    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar consumed : [Float])
+    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar data : DrinkOnLogCharacteristic, offsett: Int)
 }
 
 
@@ -151,7 +151,7 @@ public class DrinkOnService {
     
     
     /**
-     * Function for updating the observable variables with updated Status Characteristic data
+     * Function for handling a Status Characteristic write and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processStatusCharUpdate() -> Bool {
@@ -203,7 +203,7 @@ public class DrinkOnService {
     }
     
     /**
-     * Function for updating the observable variables with updated Level Sensor Characteristic data
+     * Function for processing a Level Sensor Characteristic write and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processLevelSensorCharUpdate() -> Bool {
@@ -213,13 +213,13 @@ public class DrinkOnService {
         }
         guard let data = levelSensorChar.value,
               data.count == 4,
-              let newLevelSensorRaw : UInt32 = data.uint32ValueAt(index: 0)
+              let newLevelSensorRaw : Int32 = data.int32ValueAt(index: 0)
         else {
             print("Level Sensor Characteristic Update Failed")
             return false
         }
-        
-        delegate?.drinkOnService(self, didUpdateLevelSensorChar: Int(newLevelSensorRaw))
+        let levelSensorData : DrinkOnLevelSensorCharacteristic = DrinkOnLevelSensorCharacteristic(levelSensor: Int(newLevelSensorRaw))
+        delegate?.drinkOnService(self, didUpdateLevelSensorChar: levelSensorData)
         return true
     }
     
@@ -242,7 +242,7 @@ public class DrinkOnService {
     }
     
     /**
-     * Function for updating the observable variables with the updated Info Characteristic data
+     * Function for processing a Info Characteristic write and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processInfoCharUpdate() -> Bool {
@@ -289,6 +289,45 @@ public class DrinkOnService {
             return false
         }
     }
+    
+    
+    /**
+     * Function for processing a Log Characteristic write and making the delegate call.
+     *  - returns: true if the update was sucessful else false.
+    */
+    fileprivate func processLogCharUpdate() -> Bool {
+        guard let logChar = self.logCharacteristic else {
+            print("Log Characteristic Nil")
+            return false
+        }
+        guard let data = logChar.value,
+              data.count == 19,
+              let offsettHourRaw : UInt8 = data.uint8ValueAt(index: 0)
+             else {
+                print("Log Characteristic Update Failed")
+                return false
+            }
+        
+        // Decompress the 18 logging bytes into 24 hourly data points
+        var logValues : [Float] = []
+        for index in stride(from: 1, to: 16, by: 3) {
+            
+            // Decompress 3 Log Bytes to 4 Raw Data Points
+            guard let decompressedRaw : [UInt8] = data.decompressed423(index: index) else {
+                print("Log Characteristic Update Failed")
+                return false
+            }
+            logValues.append(Float(decompressedRaw[0] / 10))
+            logValues.append(Float(decompressedRaw[1] / 10))
+            logValues.append(Float(decompressedRaw[2] / 10))
+            logValues.append(Float(decompressedRaw[3] / 10))
+        }
+        
+        let logCharData = DrinkOnLogCharacteristic(logValues: logValues, firstOffsettHour: Int(offsettHourRaw))
+        self.delegate?.drinkOnService(self, didUpdateLogChar: logCharData, offsett: Int(offsettHourRaw))
+        return true
+    }
+
     
     /**
      * The class initialzaer.

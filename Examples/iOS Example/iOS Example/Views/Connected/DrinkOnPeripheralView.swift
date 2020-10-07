@@ -41,16 +41,7 @@ struct DrinkOnPeripheralView: View {
                     Text("Disconnected")
                         .frame(height: 10)
                 }
-                
-                
-                Unwrap(drinkOnPeripheral.levelSensor) { levelSensor in
-                    HStack {
-                        Text("Level Sensor")
-                        Spacer()
-                        Text(String(format: "%d cnts", levelSensor))
-                    }
-                }
-                
+            
                 Unwrap(drinkOnPeripheral.statusCharacteristic) { charData in
                     StatusCharacteristicView(characteristicData: charData)
                 }
@@ -59,6 +50,13 @@ struct DrinkOnPeripheralView: View {
                     InfoCharacteristicView(characteristicData: charData)
                 }
                 
+                Unwrap(drinkOnPeripheral.levelSensorCharacteristic) { levelSensorChar in
+                    LevelSensorCharacteristicView(characteristicData: levelSensorChar)
+                }
+                
+                Unwrap(drinkOnPeripheral.logCharacteristic) { logChar in
+                    LogCharacteristicView(characteristicData: logChar)
+                }
             }
 
         }

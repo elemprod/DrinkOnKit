@@ -74,7 +74,10 @@ extension Data {
     }
     /// returns the signed 8 bit int encoded value stored at the index
     func int8ValueAt(index : Int) -> Int8? {
-        return Int8(bitPattern: uint8ValueAt(index: index)!)
+        guard let uint8Value : UInt8 = uint8ValueAt(index: index) else {
+            return nil
+        }
+        return Int8(uint8Value)
     }
     
     /// returns the unsigned 16 bit int encoded value stored at the index
@@ -103,7 +106,6 @@ extension Data {
             value |= UInt32(self[index + 2]) << 16
             value |= UInt32(self[index + 3]) << 24
             return value
-            //return (UInt32(self[index + 3]) << 24) | (UInt32(self[index + 2]) << 16) | (UInt32(self[index + 1]) << 8) | UInt32(self[index])
         }
     }
     
@@ -138,11 +140,25 @@ extension Data {
         }
     }
     
-    /// Returns a commas seperated hexidecimal string
-    internal var formattedHexString: String {
+    /** Decompress a 3 byte long uint8 data structure into
+    *       a 4 byte uint8 long array.  The upper 2 bits of values are disgarded
+    *       limiting the storage values to 6 bits in length. (0 to 63).
+    */
+    func decompressed423(index : Int) -> [UInt8]? {
+       
+        if index + 2  >= self.count {
+            return nil
+        }
         
-        return "[" + self.hexDescription + "]"
+        let out : [UInt8] = [
+            self[index] & 0x3F,
+            self[index + 1] & 0x3F,
+            self[index + 2] & 0x3F,
+            ((self[index] >> 6) & 0x03) | ((self[index + 1] >> 4) & 0x0C) | ((self[index + 2] >> 2) & 0x30)
+        ]
+        return out
     }
+
     
     
     var hexDescription: String {

@@ -84,13 +84,76 @@ public struct DrinkOnInfoCharacteristic {
     }
 }
 
+/// Liquid Level Sensor Characteristic Data Structure
+/// Note that this characteristic is only used for debugging purposes and may not always be available.
+public struct DrinkOnLevelSensorCharacteristic {
+    
+    /// Bottle Level Sensor in Raw Counts.
+    public let levelSensor : Int
+    
+    /// Date when the characteristic was read from the DrinkOn Peripheral
+    public let updated : Date
+    
+    /// Function for initializaing the structure with updated set to the current Date.
+    public init(levelSensor : Int) {
+        self.levelSensor = levelSensor
+        self.updated = Date()
+    }
+}
+
+/// Liquid Consumption Log Characteristic Data Structure
+public struct DrinkOnLogCharacteristic {
+    
+    // A single log data point representing the liquid consumed during a 1 hour period
+    public struct DrinkOnLogCharacteristicDataPoint : Identifiable {
+        public let id : Int
+        
+        // The number of hours previous to now that the data point represents
+        public var hour : Int {
+            get {
+                return id
+            }
+        }
+        
+        public let consumed : Float        // The liquid consumed in units of bottles during the hour
+        
+        public init(hour : Int, consumed : Float) {
+            self.id = hour
+            self.consumed = consumed
+        }
+    }
+        
+    /// An array of the user's liquid consumption for each of the previous hours with Units of Bottles consumed per Hour.
+    public let log : [DrinkOnLogCharacteristicDataPoint]
+    
+    /// Date when the characteristic was read from the DrinkOn Peripheral
+    public let updated : Date
+    
+    /// Function for initializaing the structure with an array of Data Points.
+    public init(log : [DrinkOnLogCharacteristicDataPoint]) {
+        self.log = log
+        self.updated = Date()
+    }
+    
+    /// Function for initializaing the structure with an ordered array of data point values and the hourly offsett for the first element of the array
+    public init(logValues : [Float], firstOffsettHour : Int) {
+        var logDataPoints : [DrinkOnLogCharacteristicDataPoint] = []
+        
+        // Create log data points from value array
+        for (index, value) in logValues.enumerated() {
+            let newLogDataPoint = DrinkOnLogCharacteristicDataPoint(hour: index + firstOffsettHour, consumed: value)
+            logDataPoints.append(newLogDataPoint)
+        }
+        
+        self.log = logDataPoints
+        self.updated = Date()
+    }
+}
+
 /// Data Object representing a DrinkOn BLE Peripheral
 @available(iOS 13.0, *)
 public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeripheralDelegate, DrinkOnServiceDelegate {
-    
-    
-    /// Is the DrinkOn Peripheral currently connected?
-    //@Published public internal(set) var connected :Bool = false
+
     
     /// Uniquie ID number for the object
     public let id = UUID()
@@ -104,11 +167,11 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     /// Info Characteristic Data
     @Published public internal(set) var infoCharacteristic : DrinkOnInfoCharacteristic? = nil
     
-    /// Bottle Level Sensor in Raw Counts.
-    @Published public internal(set) var levelSensor : Int? = nil
+    /// Level Sensor Characteristic Data
+    @Published public internal(set) var levelSensorCharacteristic : DrinkOnLevelSensorCharacteristic? = nil
     
-    /// An array of the user's water consumption for each of the previous hours with Units of Bottles consumed per Hour.
-    @Published public internal(set) var consumed : [Float] = []
+    /// Liquid Consumption LOg Characteristic Data
+    @Published public internal(set) var logCharacteristic : DrinkOnLogCharacteristic? = nil
     
     /// Function for setting a new 24 hr liquid consumption gload with units of Bottls.
     public func goal24hrSet(goal : Float) {
@@ -305,11 +368,9 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         }
     }
     
-    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar levelSensor: Int) {
-        if(self.levelSensor != levelSensor) {
-            DispatchQueue.main.async {
-                self.levelSensor = levelSensor
-            }
+    func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar data: DrinkOnLevelSensorCharacteristic) {
+        DispatchQueue.main.async {
+            self.levelSensorCharacteristic = data
         }
     }
     
@@ -320,7 +381,30 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         }
     }
     
-    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar consumed: [Float]) {
-        //TODO
+    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar data: DrinkOnLogCharacteristic, offsett: Int) {
+        DispatchQueue.main.async {
+            // If the offsett is 0, just update the characterstic data with the new log
+            if(offsett == 0) {
+                self.logCharacteristic = data
+            } else { // Append the new data with the old data
+                guard let previousLog = self.logCharacteristic?.log else {
+                    print("Prevous Log Point Empty")
+                    return
+                }
+                if previousLog.count != offsett {
+                    print("Logging Points Not Sequential-  Log Update Dropped")
+                    return
+                }
+                // Append the previous log with the current log
+                let combinedLog =  previousLog + data.log
+                self.logCharacteristic = DrinkOnLogCharacteristic(log: combinedLog)
+            }
+            
+        }
+    }
+
+    
+    func drinkOnService(_ service: DrinkOnService, didUpdateLogChar data: DrinkOnLogCharacteristic) {
+
     }
 }

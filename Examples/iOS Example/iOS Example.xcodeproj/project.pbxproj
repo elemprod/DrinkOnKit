@@ -21,6 +21,8 @@
 		5ABF1891252B7E5A005219A7 /* DrinkOnPeripheralView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */; };
 		5ABF1897252CBB66005219A7 /* InfoCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */; };
 		5ABF189C252CC9E2005219A7 /* StatusCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */; };
+		5ABF18A1252E1DF1005219A7 /* LevelSensorCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF18A0252E1DF1005219A7 /* LevelSensorCharacteristicView.swift */; };
+		5ABF18A4252E201C005219A7 /* LogCharacteristicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABF18A3252E201C005219A7 /* LogCharacteristicView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +41,8 @@
 		5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrinkOnPeripheralView.swift; sourceTree = "<group>"; };
 		5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoCharacteristicView.swift; sourceTree = "<group>"; };
 		5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusCharacteristicView.swift; sourceTree = "<group>"; };
+		5ABF18A0252E1DF1005219A7 /* LevelSensorCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelSensorCharacteristicView.swift; sourceTree = "<group>"; };
+		5ABF18A3252E201C005219A7 /* LogCharacteristicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCharacteristicView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +121,8 @@
 				5ABF1890252B7E5A005219A7 /* DrinkOnPeripheralView.swift */,
 				5ABF1896252CBB66005219A7 /* InfoCharacteristicView.swift */,
 				5ABF189B252CC9E2005219A7 /* StatusCharacteristicView.swift */,
+				5ABF18A0252E1DF1005219A7 /* LevelSensorCharacteristicView.swift */,
+				5ABF18A3252E201C005219A7 /* LogCharacteristicView.swift */,
 			);
 			path = Connected;
 			sourceTree = "<group>";
@@ -218,8 +224,10 @@
 				5AB22CCB2524DE6500197773 /* AppDelegate.swift in Sources */,
 				5AB22CF02524E2A900197773 /* ScannerRowView.swift in Sources */,
 				5ABF1891252B7E5A005219A7 /* DrinkOnPeripheralView.swift in Sources */,
+				5ABF18A4252E201C005219A7 /* LogCharacteristicView.swift in Sources */,
 				5AB22CF12524E2A900197773 /* ScannerView.swift in Sources */,
 				5AB22CCD2524DE6500197773 /* SceneDelegate.swift in Sources */,
+				5ABF18A1252E1DF1005219A7 /* LevelSensorCharacteristicView.swift in Sources */,
 				5ABF189C252CC9E2005219A7 /* StatusCharacteristicView.swift in Sources */,
 				5AB22CCF2524DE6500197773 /* ContentView.swift in Sources */,
 				5ABF1897252CBB66005219A7 /* InfoCharacteristicView.swift in Sources */,
