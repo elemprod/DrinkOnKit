@@ -159,12 +159,9 @@ extension Data {
         return out
     }
 
-    
-    
     var hexDescription: String {
         return reduce("") {$0 + String(format: "0x%02x,", $1)}
     }
-    
     
     fileprivate func getByteArray(_ pointer: UnsafePointer<UInt8>) -> [UInt8] {
         let buffer = UnsafeBufferPointer<UInt8>(start: pointer, count: count)

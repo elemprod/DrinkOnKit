@@ -307,23 +307,23 @@ public class DrinkOnService {
                 print("Log Characteristic Update Failed")
                 return false
             }
-        
+        print("Data Raw"  + data.hexDescription)
         // Decompress the 18 logging bytes into 24 hourly data points
         var logValues : [Float] = []
-        for index in stride(from: 1, to: 16, by: 3) {
+        for index in stride(from: 1, to: 19, by: 3) {
             
             // Decompress 3 Log Bytes to 4 Raw Data Points
             guard let decompressedRaw : [UInt8] = data.decompressed423(index: index) else {
                 print("Log Characteristic Update Failed")
                 return false
             }
-            logValues.append(Float(decompressedRaw[0] / 10))
-            logValues.append(Float(decompressedRaw[1] / 10))
-            logValues.append(Float(decompressedRaw[2] / 10))
-            logValues.append(Float(decompressedRaw[3] / 10))
+            logValues.append(Float(decompressedRaw[0]) / 10)
+            logValues.append(Float(decompressedRaw[1]) / 10)
+            logValues.append(Float(decompressedRaw[2]) / 10)
+            logValues.append(Float(decompressedRaw[3]) / 10)
         }
         
-        let logCharData = DrinkOnLogCharacteristic(logValues: logValues, firstOffsettHour: Int(offsettHourRaw))
+        let logCharData = DrinkOnLogCharacteristic(logValues: logValues, offsett: Int(offsettHourRaw))
         self.delegate?.drinkOnService(self, didUpdateLogChar: logCharData, offsett: Int(offsettHourRaw))
         return true
     }
@@ -401,7 +401,7 @@ public class DrinkOnService {
             print("Info Char Read")
             
         } else if characteristic === self.logCharacteristic {
-            //TODO process log update
+            _ = processLogCharUpdate()
             print("Log Char Read")
         }
         

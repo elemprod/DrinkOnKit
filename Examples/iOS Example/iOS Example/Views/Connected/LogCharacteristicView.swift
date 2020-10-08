@@ -41,7 +41,7 @@ struct LogCharacteristicView: View {
 struct LogCharacteristicView_Previews: PreviewProvider {
        static var previews: some View {
         let log : [Float] = [1.0, 2.5, 0.0, 3.4, 0, 0, 0, 1, 2, 3, 2.2, 0, 3.1]
-        let previewCharData : DrinkOnLogCharacteristic = DrinkOnLogCharacteristic(logValues: log, firstOffsettHour: 0)
+        let previewCharData : DrinkOnLogCharacteristic = DrinkOnLogCharacteristic(logValues: log, offsett: 0)
 
         LogCharacteristicView(characteristicData: previewCharData)
     }

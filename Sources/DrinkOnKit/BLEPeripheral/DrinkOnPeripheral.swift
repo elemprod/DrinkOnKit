@@ -136,12 +136,12 @@ public struct DrinkOnLogCharacteristic {
     }
     
     /// Function for initializaing the structure with an ordered array of data point values and the hourly offsett for the first element of the array
-    public init(logValues : [Float], firstOffsettHour : Int) {
+    public init(logValues : [Float], offsett : Int) {
         var logDataPoints : [DrinkOnLogCharacteristicDataPoint] = []
         
         // Create log data points from value array
         for (index, value) in logValues.enumerated() {
-            let newLogDataPoint = DrinkOnLogCharacteristicDataPoint(hour: index + firstOffsettHour, consumed: value)
+            let newLogDataPoint = DrinkOnLogCharacteristicDataPoint(hour: index + offsett, consumed: value)
             logDataPoints.append(newLogDataPoint)
         }
         
