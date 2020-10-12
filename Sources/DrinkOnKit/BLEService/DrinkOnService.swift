@@ -356,7 +356,7 @@ public class DrinkOnService {
                 print("Log Characteristic Update Failed")
                 return false
             }
-        print("Data Raw"  + data.hexDescription)
+        //print("Data Raw: "  + data.hexDescription)
         // Decompress the 18 logging bytes into 24 hourly data points
         var logValues : [Float] = []
         for index in stride(from: 1, to: 19, by: 3) {

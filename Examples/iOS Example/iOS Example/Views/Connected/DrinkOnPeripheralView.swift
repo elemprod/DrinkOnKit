@@ -64,7 +64,7 @@ struct DrinkOnPeripheralView: View {
             drinkOnPeripheral.disconnect()
         }
         .onAppear() {
-            print("**** On Appear")
+            //print("**** On Appear")
             DrinkOnKit.sharedInstance.stopScanForPeripherals()
             drinkOnPeripheral.connect(options: .readAll)
         }

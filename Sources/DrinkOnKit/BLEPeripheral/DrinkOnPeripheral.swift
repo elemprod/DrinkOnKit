@@ -260,7 +260,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         self.peripheral = peripheral
         self.state = peripheral.state
         self.options = DrinkOnPeripheralOptions.readAll         // set default option
-        print("Init: \(peripheral)")
+        //print("Init: \(peripheral)")
     }
     
     /// Peripheral Initializer with connection options.
@@ -268,7 +268,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         self.peripheral = peripheral
         self.state = peripheral.state
         self.options = options
-        print("Init: \(peripheral)")
+        //print("Init: \(peripheral)")
     }
     
     // Was the connection attempt sucessful?
@@ -437,9 +437,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     //MARK: DrinkOnService Delegate
     func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar data: DrinkOnStatusCharacteristic) {
         DispatchQueue.main.async {
-            print("****** Status Updated *****")
-            //self.objectWillChange.send()
-            //self.statusCharacteristic?.objectWillChange.send()
+            //print("****** Status Updated *****")
             self.statusCharacteristic = data
         }
     }

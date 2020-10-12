@@ -91,7 +91,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
     fileprivate let centralQueue = DispatchQueue(label: "com.elementinc.drinkonkit", attributes: [])
     
     private override init() {
-        super.init()        // call so self is initialized prior to the centeral manager
+        super.init()        // call so self is initialized prior to the central manager
         centralManager = CBCentralManager(delegate: self, queue: centralQueue)
     }
     
@@ -323,7 +323,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
     }
     
     internal func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        print("Centeral Manager didFailToConnect")
+        print("Central Manager didFailToConnect")
         print("Error: \(String(describing: error))")
         
         guard let drinkOnPeripheral = self.selectedPeripheral else {
@@ -346,9 +346,9 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
     internal func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         
         if error != nil {
-            print("Centeral Manager didDisconnectPeripheral Error: \(String(describing: error))")
+            print("Central Manager didDisconnectPeripheral Error: \(String(describing: error))")
         } else {
-            print("Centeral Manager didDisconnectPeripheral")
+            print("Central Manager didDisconnectPeripheral")
         }
         
         guard let drinkOnPeripheral = self.selectedPeripheral else {

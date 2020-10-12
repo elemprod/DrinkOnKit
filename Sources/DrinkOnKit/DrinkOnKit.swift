@@ -144,7 +144,7 @@ public protocol DrinkOnKitDelegate: class {
         willSet(newState) {
             if stateInternal != newState {
                 DispatchQueue.main.async {
-                    print("State: " + newState.description)
+                    //print("State: " + newState.description)
                     self.state = newState   // Publish a new state from the main thread
                 }
             }
