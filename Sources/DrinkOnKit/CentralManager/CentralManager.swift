@@ -45,7 +45,7 @@ internal protocol CentralManagerDelegate: class {
      * - Parameter manager              : The Central Manager.
      * - Parameter peripheral           : The peripheral.
      */
-    func centralManager(_ manager: CentralManager, didFailToConnect peripheral: CBPeripheral)
+    func centralManager(_ manager: CentralManager, didFailToConnect peripheral: DrinkOnPeripheral)
     
     /**
      * The Central Manager disconnected from a DrinkOn Peripheral.
@@ -53,7 +53,7 @@ internal protocol CentralManagerDelegate: class {
      * - Parameter manager              : The Central Manager.
      * - Parameter peripheral           : The peripheral.
      */
-    func centralManager(_ manager: CentralManager, didDisconnect peripheral: CBPeripheral)
+    func centralManager(_ manager: CentralManager, didDisconnect peripheral: DrinkOnPeripheral)
     
     /**
      * The Central Manager connected to a Peripheral.
@@ -77,11 +77,14 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
     /// The DrinkOn Peripherals discovered during the BLE Scan
     @Published internal var scannedPeripherals : ScannedDrinkOnPeripherals = ScannedDrinkOnPeripherals()
     
-    /// The selected peripheral to attempt to connect with.
-    fileprivate var selectedPeripheral : CBPeripheral? = nil
+    /// The currently selected DrinkOn peripheral connected to or attempting to conect too.
+    fileprivate var selectedPeripheral : DrinkOnPeripheral? = nil
+    
+    /// The connection options for the selected peripheral
+    fileprivate var selectedPeripheralOptions : DrinkOnPeripheralOptions = DrinkOnPeripheralOptions()
     
     /// The current DrinkOnPeripheral.
-    @Published internal var drinkOnPeripheral : DrinkOnPeripheral? = nil
+    //@Published internal var drinkOnPeripheral : DrinkOnPeripheral? = nil
     
     /// BLE central manager, implicity unwrap it since its set in init
     fileprivate var centralManager : CBCentralManager!
@@ -137,35 +140,15 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
      * If the peripheral is already connected, calls the delegate didConnect method.
      * If the periperal is already attempting to connnect, the function just returns.
      *
-     * - parameter aPeripheral:         The peripheral to connect.
+     * - parameter peripheral:          The peripheral to connect.
+     * - parameter options:             The peripheral connection options.
      *
      */
-    internal func connectPeripheral(_ peripheral: CBPeripheral) {
+    internal func connectPeripheral(_ peripheral: DrinkOnPeripheral) {
         
-        self.selectedPeripheral = peripheral    // Store peripheral reference
-        print("Connecting to: \(peripheral)")
-        centralManager.connect(peripheral, options: nil)
-        
-        /*
-         if peripheral.state == .connected {                                 // the peripheral is already connected
-         print("connectPeripheral - Peripheral Already Connected")
-         
-         if peripheral === self.drinkOnPeripheral?.peripheral {
-         // The peripheral matches the previously connected DrinkOn
-         if(
-         }
-         let connectedPeripheral = DrinkOn
-         // make the callback before starting discovery so delegate has a chance to register itself as a delegate
-         self.delegate?.centralManager(self, didConnect: connectedPeripheral)
-         connectedPeripheral.startServiceDiscovery()
-         return
-         } else if peripheral.state == .connecting {                         // already attempting to connect to the peripheral
-         print("connectPeripheral - Already Attempting to Connect to Peripheral")
-         } else {
-         print("Connecting to: \(peripheral)")
-         centralManager.connect(peripheral, options: nil)
-         }
-         */
+        self.selectedPeripheral = peripheral    // Store peripheral & connecton options
+        print("Connecting to: \(peripheral.debugDescription)")
+        centralManager.connect(peripheral.peripheral, options: nil)
     }
     
     /**
@@ -175,7 +158,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
      * - return:                        Returns true if the connection process was started.
      *                                  False if the peripheral is already disconnected or BLE is powered off.
      */
-    internal func disconnectPeripheral(peripheral: DrinkOnPeripheral) -> Bool {
+    internal func disconnectPeripheral(_ peripheral: DrinkOnPeripheral) -> Bool {
         guard centralManager.state == .poweredOn else {
             print("Power Off")
             return false
@@ -292,7 +275,6 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
         }
     }
     
-    
     internal func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         
         if let name = peripheral.name {
@@ -301,30 +283,55 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
             print("Connected to device.")
         }
         
-        // Check if connected to the Selected Peripheral
-        if(peripheral === self.selectedPeripheral) {
-            
-            if self.drinkOnPeripheral?.peripheral != nil && peripheral === self.drinkOnPeripheral?.peripheral {
-                //The connected Peripheral is the same as the previously connected DrinkOn Peripheral
-                if self.drinkOnPeripheral?.drinkOnService == nil {
-                    // Only need to start Service Discovery if Service has not previously been discovered
-                    self.drinkOnPeripheral!.startServiceDiscovery()
+        guard let drinkOnPeripheral = self.selectedPeripheral else {
+            print("DrinkOn Peripheral Not Set")
+            return
+        }
+        
+        if(peripheral === drinkOnPeripheral.peripheral) {
+            // The connected Peripheral is the same as the selected peripheral
+            if let drinkOnService = drinkOnPeripheral.drinkOnService {
+                // DrinkOn Service previously discover, read selected characteristics
+                
+                if drinkOnPeripheral.options.contains(.readStatusChar) {
+                    _ = drinkOnService.readStatusChar()
+                }
+                if drinkOnPeripheral.options.contains(.readInfoChar) {
+                    _ = drinkOnService.readInfoChar()
+                }
+                if drinkOnPeripheral.options.contains(.readLevelSensorChar) {
+                    _ = drinkOnService.readLevelSensorChar()
+                }
+                if drinkOnPeripheral.options.contains(.notifyLevelSensorChar) {
+                    _ = drinkOnService.notifyLevelSensorChar()
+                }
+                
+                if drinkOnPeripheral.options.contains(.readLogChar) {
+                    _ = drinkOnService.readLogChar()
                 }
             } else {
-                // Create new DrinkOnPeripheral from the connected Peripheral
-                self.drinkOnPeripheral = DrinkOnPeripheral(peripheral: peripheral)
-                self.drinkOnPeripheral!.startServiceDiscovery()                     // Start Service Discovery
+                // DrinkOn Service was not previously discovered, start discovery.
+                drinkOnPeripheral.startServiceDiscovery()
             }
-            delegate?.centralManager(self, didConnect: self.drinkOnPeripheral!)
+        
+            delegate?.centralManager(self, didConnect: drinkOnPeripheral)
+            
+        } else {
+            print("Unknown Peripheral Discovered")
         }
+        
     }
     
     internal func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("Centeral Manager didFailToConnect")
         print("Error: \(String(describing: error))")
         
-        if(peripheral === self.selectedPeripheral) {
-            delegate?.centralManager(self, didFailToConnect: peripheral)
+        guard let drinkOnPeripheral = self.selectedPeripheral else {
+            return
+        }
+        
+        if(peripheral === drinkOnPeripheral.peripheral) {
+            delegate?.centralManager(self, didFailToConnect: drinkOnPeripheral)
         }
     }
     
@@ -344,8 +351,11 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
             print("Centeral Manager didDisconnectPeripheral")
         }
         
-        if(peripheral === self.selectedPeripheral) {
-            delegate?.centralManager(self, didDisconnect: peripheral)
+        guard let drinkOnPeripheral = self.selectedPeripheral else {
+            return
+        }
+        if(peripheral === drinkOnPeripheral.peripheral) {
+            delegate?.centralManager(self, didDisconnect: drinkOnPeripheral)
         }
     }
 }

@@ -38,27 +38,9 @@ extension ScannedDrinkOnPeripheral {
 }
 
 struct ScannerRowView: View {
+
     
-    @EnvironmentObject var appSharedData : AppSharedData
-    
-    @EnvironmentObject var scannedDrinkOnPeripheral: ScannedDrinkOnPeripheral
-    
-    // Function for connecting to the scanned peripheral
-    func connectDrinkOn() {
-        
-        guard let peripheral : CBPeripheral = scannedDrinkOnPeripheral.peripheral else {
-            return
-        }
-        appSharedData.scanning = false;
-        DrinkOnKit.sharedInstance.connectPeripheral(peripheral)
-    }
-    
-    // Function for disconnecting a connected peripheral
-    func disconnectDrinkOn() {
-        
-        DrinkOnKit.sharedInstance.disconnectPeripheral()
-    }
-    
+    @ObservedObject var scannedDrinkOnPeripheral: ScannedDrinkOnPeripheral
     
     var body: some View {
         HStack {
@@ -75,37 +57,18 @@ struct ScannerRowView: View {
                    Text(String(format: "%1.1f Bottles", consumed))
                 }
             }
-            
-            if scannedDrinkOnPeripheral.connected  {
-                Text("Connected")
-                //Button("Disconnect", action: disconnectDrinkOn)
-            } else {
-                Button("Connect", action: connectDrinkOn)
-            }
-            /*
-            if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.disconnected {
-                Button("Connect", action: connectDrinkOn)
-            } else if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.connecting {
-                Text("Connecting")
-            } else if scannedDrinkOnPeripheral.peripheral?.state == CBPeripheralState.connected {
-                
-            }
- */
+
             Spacer()
         }
 
     }
 }
 
+/*
 struct ScannerRowView_Previews: PreviewProvider {
 
         
     static var previews: some View {
-        
-        Group {
-            ScannerRowView().environmentObject(ScannedDrinkOnPeripheral())
-        }
-        .previewLayout(.fixed(width: 300, height: 70))
-        
     }
 }
+*/

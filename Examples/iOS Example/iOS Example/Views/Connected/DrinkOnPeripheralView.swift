@@ -11,19 +11,21 @@ import CoreBluetooth
 
 struct DrinkOnPeripheralView: View {
     
-    @EnvironmentObject var drinkOnPeripheral : DrinkOnPeripheral
+    @ObservedObject var drinkOnPeripheral : DrinkOnPeripheral
+    
+    @ObservedObject var drinkOnKit :  DrinkOnKit = DrinkOnKit.sharedInstance
     
     /// Conditionally display a view with an optional value
     struct Unwrap<Value, Content: View>: View {
         private let value: Value?
         private let contentProvider: (Value) -> Content
-
+        
         init(_ value: Value?,
              @ViewBuilder content: @escaping (Value) -> Content) {
             self.value = value
             self.contentProvider = content
         }
-
+        
         var body: some View {
             value.map(contentProvider)
         }
@@ -31,20 +33,12 @@ struct DrinkOnPeripheralView: View {
     
     var body: some View {
         
-        NavigationView() {
-            VStack {
-                
-                if drinkOnPeripheral.state == .connected  {
-                    Text("Connected")
-                        .frame(height: 10)
-                } else {
-                    Text("Disconnected")
-                        .frame(height: 10)
-                }
-            
-                Unwrap(drinkOnPeripheral.statusCharacteristic) { charData in
+        VStack {
+            List {
+                Unwrap(self.drinkOnPeripheral.statusCharacteristic) { charData in
                     StatusCharacteristicView(characteristicData: charData)
                 }
+                
                 
                 Unwrap(drinkOnPeripheral.infoCharacteristic) { charData in
                     InfoCharacteristicView(characteristicData: charData)
@@ -58,20 +52,30 @@ struct DrinkOnPeripheralView: View {
                     LogCharacteristicView(characteristicData: logChar)
                 }
             }
-
+            
+            Text(drinkOnKit.error.description)
+                .frame(alignment: .leading)
+            Text(drinkOnKit.state.description)
+                .frame(alignment: .leading)
         }
-        .navigationBarTitle(Text("DrinkOn Peripheral"))
+        .navigationBarTitle("DrinkOn Peripheral", displayMode: .inline)
+        
         .onDisappear() {
-            DrinkOnKit.sharedInstance.disconnectPeripheral()
+            drinkOnPeripheral.disconnect()
         }
-
+        .onAppear() {
+            print("**** On Appear")
+            DrinkOnKit.sharedInstance.stopScanForPeripherals()
+            drinkOnPeripheral.connect(options: .readAll)
+        }
+        
     }
 }
 
 /*
-struct DrinkOnPeripheralView_Previews: PreviewProvider {
-    static var previews: some View {
-        DrinkOnPeripheralView()
-    }
-}
-*/
+ struct DrinkOnPeripheralView_Previews: PreviewProvider {
+ static var previews: some View {
+ DrinkOnPeripheralView()
+ }
+ }
+ */

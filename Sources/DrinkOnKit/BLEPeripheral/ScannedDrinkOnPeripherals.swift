@@ -3,7 +3,7 @@ import CoreBluetooth
 /*!
  *  @class ScannedDrinkOnPeripherals
  *
- *  @discussion Storage container for a collection DrinkOn BLE Peripheral's which were detected during a BLE Scann.
+ *  @discussion Storage container for a collection DrinkOn BLE Peripheral's which were detected during a BLE Scan.
  */
 @available(iOS 13.0, *)
 public class ScannedDrinkOnPeripherals: NSObject, ObservableObject {
@@ -36,7 +36,7 @@ public class ScannedDrinkOnPeripherals: NSObject, ObservableObject {
         
         guard let result = get(peripheral: peripheral) else {
             // Add the peripheral if not already in the array
-            let newPeripheral = ScannedDrinkOnPeripheral(withPeripheral: peripheral, andRSSI: RSSI)
+            let newPeripheral = ScannedDrinkOnPeripheral(peripheral, andRSSI: RSSI)
             peripherals.append(newPeripheral)
             return newPeripheral
         }
@@ -47,12 +47,6 @@ public class ScannedDrinkOnPeripherals: NSObject, ObservableObject {
         return peripherals[result.index]
     }
     
-    /// Function for adding an example peripheral to the peripherals
-    public func exampleAdd() {
-        let examplePeripheral = ScannedDrinkOnPeripheral()
-        examplePeripheral.rssi = -40.0
-        peripherals.append(examplePeripheral)
-    }
     /**
      * Returns the peripheral with the matching UUID if known
      *
@@ -61,10 +55,7 @@ public class ScannedDrinkOnPeripherals: NSObject, ObservableObject {
      */
     public func get(peripheral: CBPeripheral)->(peripheral: ScannedDrinkOnPeripheral, index: Int)? {
         for (index, element) in peripherals.enumerated() {
-            guard let elementPeripheralID = element.peripheral?.identifier else {
-                continue    // element peripheral empty, skip check
-            }
-            if elementPeripheralID == peripheral.identifier {
+            if element.peripheral.identifier == peripheral.identifier {
                 return (element, index)
             }
         }
@@ -74,19 +65,14 @@ public class ScannedDrinkOnPeripherals: NSObject, ObservableObject {
     /**
      * Search and return a peripheral with a matching UUID
      *
-     * - parameter anScannedPeripheral: the peripheral to search for
+     * - parameter peripheral: the peripheral to search for
      * - returns                    : the matching ScannedPeripheral or nil if not found and the index
      */
     public func get(peripheral: ScannedDrinkOnPeripheral)->(peripheral: ScannedDrinkOnPeripheral, index: Int)? {
-        guard let peripheralID = peripheral.peripheral?.identifier  else {
-            return nil  // Search Peripheral Empty
-        }
+        let peripheralID = peripheral.peripheral.identifier
         
         for (index, element) in peripherals.enumerated() {
-            guard let elementPeripheralID = element.peripheral?.identifier else {
-                continue    // element peripheral empty, skip check
-            }
-            if elementPeripheralID == peripheralID {
+            if element.peripheral.identifier  == peripheralID {
                 return (element, index)
             }
         }

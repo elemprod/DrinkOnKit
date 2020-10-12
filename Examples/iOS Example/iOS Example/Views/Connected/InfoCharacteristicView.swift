@@ -19,32 +19,28 @@ struct InfoCharacteristicView: View {
     var characteristicData : DrinkOnInfoCharacteristic
     
     var body: some View {
-        List(){
-            Section(header: InfoCharListHeader()) {
-                HStack {
-                    Text("Firmware Version")
-                    Spacer()
-                    Text(characteristicData.firmwareVersion)
-                }
-                HStack {
-                    Text("DFU Code")
-                    Spacer()
-                    Text(String(characteristicData.dfuCode))
-                }
-                HStack {
-                    Text("Model")
-                    Spacer()
-                    Text(String(characteristicData.modelCode))
-                }
-                HStack {
-                    Text("Hardware Version")
-                    Spacer()
-                    Text(characteristicData.hardwareCode)
-                }
+        Section(header: InfoCharListHeader()) {
+            HStack {
+                Text("Firmware Version")
+                Spacer()
+                Text(characteristicData.firmwareVersion)
             }
-
+            HStack {
+                Text("DFU Code")
+                Spacer()
+                Text(String(characteristicData.dfuCode))
+            }
+            HStack {
+                Text("Model")
+                Spacer()
+                Text(String(characteristicData.modelCode))
+            }
+            HStack {
+                Text("Hardware Version")
+                Spacer()
+                Text(characteristicData.hardwareCode)
+            }
         }
-        
     }
 }
 

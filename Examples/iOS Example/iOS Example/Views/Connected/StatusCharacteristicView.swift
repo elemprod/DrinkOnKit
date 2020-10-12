@@ -19,43 +19,38 @@ struct StatusCharacteristicView: View {
     
     var body: some View {
         
-        List(){
-            Section(header: StatusCharListHeader()) {
-                HStack {
-                    Text("Goal (24hr)")
-                    Spacer()
-                    Text(String(format: "%.1f Bottles", characteristicData.goal24hr))
-                }
-                HStack {
-                    Text("Bottle Level")
-                    Spacer()
-                    Text(String(format: "%d%%", characteristicData.bottleLevel))
-                }
-                HStack {
-                    Text("Consumed (24hr)")
-                    Spacer()
-                    Text(String(format: "%.1f Bottles", characteristicData.consumed24hr))
-                }
-                HStack {
-                    Text("UI State Code")
-                    Spacer()
-                    Text(String(format: "%d", characteristicData.UIStateCode))
-                }
-                HStack {
-                    Text("Battery")
-                    Spacer()
-                    Text(String(format: "%d %%", characteristicData.batteryLevel))
-                }
-                HStack {
-                    Text("Run Time")
-                    Spacer()
-                    Text(String(format: "%d hrs", characteristicData.runTime))
-                }
+        Section(header: StatusCharListHeader()) {
+            HStack {
+                Text("Goal (24hr)")
+                Spacer()
+                Text(String(format: "%.1f Bottles", characteristicData.goal24hr))
             }
-
+            HStack {
+                Text("Bottle Level")
+                Spacer()
+                Text(String(format: "%d%%", characteristicData.bottleLevel))
+            }
+            HStack {
+                Text("Consumed (24hr)")
+                Spacer()
+                Text(String(format: "%.1f Bottles", characteristicData.consumed24hr))
+            }
+            HStack {
+                Text("UI State Code")
+                Spacer()
+                Text(String(format: "%d", characteristicData.UIStateCode))
+            }
+            HStack {
+                Text("Battery")
+                Spacer()
+                Text(String(format: "%d %%", characteristicData.batteryLevel))
+            }
+            HStack {
+                Text("Run Time")
+                Spacer()
+                Text(String(format: "%d hrs", characteristicData.runTime))
+            }
         }
-        
-        
     }
 }
 

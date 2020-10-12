@@ -10,7 +10,7 @@ import CoreBluetooth
 
 
 /// DrinkOnKit Error Definition
-@objc public enum DrinkOnKitError : Int {
+public enum DrinkOnKitError : Int {
     case none                                               // No error
     case bluetoothUnsupported                               // Bluetooth Low Energy is not supported by the device.
     case bluetoothPoweredOff                                // Bluetooth is powered off on the device.
@@ -27,19 +27,19 @@ import CoreBluetooth
         case .none:
             return NSLocalizedString("No Errors.", comment: "DrinkOnKitError.noError")
         case .bluetoothUnsupported:
-            return NSLocalizedString("BLE is not supported by the device.", comment: "DrinkOnKitError.deviceBLEUnsupported")
+            return NSLocalizedString("Bluetooth not supported by this device.", comment: "DrinkOnKitError.deviceBLEUnsupported")
         case .bluetoothPoweredOff:
-            return NSLocalizedString("Bluetooth is powered off on the device.", comment: "DrinkOnKitError.deviceBLEPoweredOff")
+            return NSLocalizedString("Bluetooth is powered off.", comment: "DrinkOnKitError.deviceBLEPoweredOff")
         case .bluetoothUnauthorized:
-            return NSLocalizedString("Bluetooth is not authorized on the device.", comment: "DrinkOnKitError.deviceBLEUnauthorized")
+            return NSLocalizedString("Bluetooth is not authorized.", comment: "DrinkOnKitError.deviceBLEUnauthorized")
         case .busyScanning:
             return NSLocalizedString("Already scanning for DrinkOn Perpherials.", comment: "DrinkOnKitError.busyScanning")
         case .busyConnecting:
-            return NSLocalizedString("Already attempting to connect to a DrinkOn Perpherial, new connection not attempted.", comment: "DrinkOnKitError.busyConnecting")
+            return NSLocalizedString("Already attempting to connect to a DrinkOn Perpherial..", comment: "DrinkOnKitError.busyConnecting")
         case .busyConnected:
-            return NSLocalizedString("Already connected to a DrinkOn Perpherial, new connection not attempted.", comment: "DrinkOnKitError.busyConnected")
+            return NSLocalizedString("Already connected to a DrinkOn Perpherial.", comment: "DrinkOnKitError.busyConnected")
         case .noPerpherialsFound:
-            return NSLocalizedString("No DrinkOn Perpherials were found before scanning timed out.", comment: "DrinkOnKitError.noPerpherialsFound")
+            return NSLocalizedString("No DrinkOn Perpherials were found.", comment: "DrinkOnKitError.noPerpherialsFound")
         case .connectionFailed:
             return NSLocalizedString("Connection Failed.", comment: "DrinkOnKitError.connectionFailed")
         case .internalError:
@@ -50,7 +50,7 @@ import CoreBluetooth
 }
 
 /// DrinkOnKit State Definition
-@objc public enum DrinkOnKitState : Int {
+public enum DrinkOnKitState : Int {
     case unknown                                            // Unknown State
     case ready                                              // Initialized and ready to be used
     case scanning                                           // Scanning for DrinkOn Perpherials
@@ -67,20 +67,22 @@ import CoreBluetooth
         case .ready:
             return NSLocalizedString("Ready", comment: "DrinkOnKitState.ready")
         case .scanning:
-            return NSLocalizedString("Scanning for DrinkOn Perpherials.", comment: "DrinkOnKitState.scanning")
+            return NSLocalizedString("Scanning.", comment: "DrinkOnKitState.scanning")
         case .connecting:
-            return NSLocalizedString("Attempting to Connect to a DrinkOn Perpherial.", comment: "DrinkOnKitState.connecting")
+            return NSLocalizedString("Attempting Connection.", comment: "DrinkOnKitState.connecting")
         case .connected:
-            return NSLocalizedString("Connected to a DrinkOn Perpherial.", comment: "DrinkOnKitState.connected")
+            return NSLocalizedString("Connected.", comment: "DrinkOnKitState.connected")
         case .bluetoothPoweredOff:
             return NSLocalizedString("Bluetooth is Powered Off.", comment: "DrinkOnKitState.bluetoothPoweredOff")
         case .bluetoothUnauthorized:
-            return NSLocalizedString("Bluetooth access has not been Authorized on this Device.", comment: "DrinkOnKitState.bluetoothUnauthorized")
+            return NSLocalizedString("Bluetooth has not been Authorized on this Device.", comment: "DrinkOnKitState.bluetoothUnauthorized")
         case .bluetoothUnsupported:
             return NSLocalizedString("Bluetooth is not supported on this Device.", comment: "DrinkOnKitState.bluetoothUnsupported")
         }
     }
 }
+
+
 
 
 /// DrinkOnKit Delegate
@@ -95,6 +97,7 @@ public protocol DrinkOnKitDelegate: class {
      */
     func drinkOnKit(_ drinkOnKit: DrinkOnKit, didConnect : DrinkOnPeripheral)
 }
+
 
 /*
  * A high level Library Module for acessing DrinkOn Peripherals via Bluetooth Low Energy
@@ -141,7 +144,7 @@ public protocol DrinkOnKitDelegate: class {
         willSet(newState) {
             if stateInternal != newState {
                 DispatchQueue.main.async {
-                    print("** " + newState.description)
+                    print("State: " + newState.description)
                     self.state = newState   // Publish a new state from the main thread
                 }
             }
@@ -234,9 +237,8 @@ public protocol DrinkOnKitDelegate: class {
     //MARK: - Connection Functions
     
     /// The current DrinkOnPeripheral.
-    /// Set on the first sucessful connection attempt with a DrinkOn Peripheral.  Reference is valid even after disconnect
-    @Published public var drinkOnPeripheral : DrinkOnPeripheral?
-    
+    /// Set on the first connection with a DrinkOn Peripheral.  Remains valid even after disconnect
+    //@Published public var drinkOnPeripheral : DrinkOnPeripheral?
     
     // The maximum duration to attempt to connect to a peripheral before cancelling the attempt. (seconds)
     fileprivate let ConnectionTimeOut: Double = 4.0
@@ -249,13 +251,20 @@ public protocol DrinkOnKitDelegate: class {
      * If the periperal is already attempting to connnect a peripheral, a busyConnecting error is reported.
      * If BLE is inaccessible, the matching error will be reported.
      *
-     * - parameter peripheral:         The peripheral to connect.
+     * - parameter peripheral:          The peripheral to connect.
+     * - parameter options:             The peripheral connection options.
      *
      */
-    public func connectPeripheral(_ peripheral: CBPeripheral) {
+    public func connectPeripheral(_ peripheral: DrinkOnPeripheral) {
         if(self.bleAccessCheck()) {               // Attempt Connection
             stateInternal = .connecting
+            print("Connecting to: \(peripheral.debugDescription)")
             CentralManager.sharedInstance.connectPeripheral(peripheral)
+            
+            DispatchQueue.main.async {
+                //self.drinkOnPeripheral = peripheral
+                peripheral.state = peripheral.peripheral.state
+            }
             
             // Check if the connection attempt was sucessful after a delay.
             //TODO would be better to use a timer that can be invalidated
@@ -272,13 +281,9 @@ public protocol DrinkOnKitDelegate: class {
     }
     
     /// Function for disconnecting a connected peripheral
-    public func disconnectPeripheral() {
+    public func disconnectPeripheral(_ peripheral: DrinkOnPeripheral) {
         
-        guard let connectedPeripheral : DrinkOnPeripheral = self.drinkOnPeripheral else {
-            print("No Peripheral")
-            return
-        }
-        _ = CentralManager.sharedInstance.disconnectPeripheral(peripheral: connectedPeripheral)
+        _ = CentralManager.sharedInstance.disconnectPeripheral(peripheral)
     }
     
     //MARK:  CentralManagerDelegate
@@ -318,20 +323,21 @@ public protocol DrinkOnKitDelegate: class {
         }
     }
     
-    internal func centralManager(_ manager: CentralManager, didFailToConnect peripheral: CBPeripheral) {
+    internal func centralManager(_ manager: CentralManager, didFailToConnect peripheral: DrinkOnPeripheral) {
         if(self.stateInternal == .connecting || self.stateInternal == .connected) {
             self.stateInternal = .ready         // clear the connecting / connected states
         }
         self.errorInternal = .connectionFailed
         DispatchQueue.main.async {
-            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral) {
+            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral.peripheral) {
                 scannedDrinkOnPeripheral.peripheral.connected = false;   // Update the matching scanned peripheral connection state
             }
-            self.drinkOnPeripheral?.state = peripheral.state
+            peripheral.state = peripheral.peripheral.state
         }
     }
     
-    internal func centralManager(_ manager: CentralManager, didDisconnect peripheral: CBPeripheral) {
+    internal func centralManager(_ manager: CentralManager, didDisconnect peripheral: DrinkOnPeripheral) {
+        print("Did Disconnect: \(peripheral.debugDescription)")
         if(self.stateInternal == .connecting || self.stateInternal == .connected) {
             self.stateInternal = .ready         // clear the connecting / connected states
         }
@@ -339,41 +345,27 @@ public protocol DrinkOnKitDelegate: class {
             self.errorInternal = .none
         }
         DispatchQueue.main.async {
-            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral) {
+            if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral.peripheral) {
                 scannedDrinkOnPeripheral.peripheral.connected = false;   // Update the matching scanned peripheral connection state
             }
-            self.drinkOnPeripheral?.state = peripheral.state
+            peripheral.state = peripheral.peripheral.state
         }
     }
     
     internal func centralManager(_ manager: CentralManager, didConnect peripheral: DrinkOnPeripheral) {
         stateInternal = .connected
         errorInternal = .none
+        print("Did Connect: \(peripheral.debugDescription)")
         
         DispatchQueue.main.async {
             if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral.peripheral) {
                 scannedDrinkOnPeripheral.peripheral.connected = true;   // Update the matching scanned peripheral connection state
             }
-            self.drinkOnPeripheral = peripheral
-            self.drinkOnPeripheral?.state = peripheral.state
+            peripheral.state = peripheral.peripheral.state
             self.delegate?.drinkOnKit(self, didConnect: peripheral)
         }
 
     }
-    
-    
-    
-    /*
-     // Check if a Peripheral matches the selected Peripheral
-     private func isSelectedPeripheral(_ peripheral: CBPeripheral) -> Bool {
-     
-     guard let ourPeripheralIdentifier = self.peripheral?.identifier else {
-     print("Error Peripheral ID Not Set")
-     return false
-     }
-     return (peripheral.identifier == ourPeripheralIdentifier)
-     }
-     */
-    
+
 }
 

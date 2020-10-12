@@ -28,37 +28,19 @@ struct ScannerView: View {
                 
                 List(scannedPeripherals.peripherals) { peripheral in
                     
-                    // Show the detail disclousre if connected
-                    if peripheral.connected, let drinkOnPeripheral : DrinkOnPeripheral = DrinkOnKit.sharedInstance.drinkOnPeripheral {
-                        NavigationLink(destination: DrinkOnPeripheralView()
-                                        .environmentObject(drinkOnPeripheral)) {
-                            ScannerRowView()
-                                .environmentObject(peripheral)
-                        }
-                    } else {
-                        ScannerRowView()
-                            .environmentObject(appSharedData)
-                            .environmentObject(peripheral)
+                    NavigationLink(destination: DrinkOnPeripheralView(drinkOnPeripheral: peripheral.drinkOnPeripheral))
+                        {
+                        ScannerRowView(scannedDrinkOnPeripheral: peripheral)
                     }
-
-                    /*
-                    NavigationLink(destination: ConnectView()
-                                    .environmentObject(peripheral)) {
-                        ScannerRowView()
-                            .environmentObject(peripheral)
-                    }
-                     */
                 }
-                
-                
-                
+            
                 Text(drinkOnKit.error.description)
                     .frame(alignment: .leading)
                 Text(drinkOnKit.state.description)
                     .frame(alignment: .leading)
                 
             }
-            .navigationBarTitle(Text("DrinkOn Scanner"))
+            .navigationBarTitle("DrinkOn Scanner")
             .onDisappear() {
                 appSharedData.scanning = false
             }

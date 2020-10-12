@@ -17,16 +17,13 @@ struct LevelSensorCharacteristicView: View {
     var characteristicData : DrinkOnLevelSensorCharacteristic
     
     var body: some View {
-        List(){
-            Section(header: LevelSensorCharListHeader()) {
-                HStack {
-                    Text("Sensor Raw")
-                    Spacer()
-                    Text(String(format: "%d cnts", characteristicData.levelSensor))
-                }
+        Section(header: LevelSensorCharListHeader()) {
+            HStack {
+                Text("Sensor Raw")
+                Spacer()
+                Text(String(format: "%d cnts", characteristicData.levelSensor))
             }
         }
-        
     }
 }
 

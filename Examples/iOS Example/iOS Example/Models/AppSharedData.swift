@@ -15,28 +15,11 @@ final class AppSharedData: ObservableObject {
 
     /// Shared DrinkOn Kit
     var drinkOnKit : DrinkOnKit = DrinkOnKit.sharedInstance
-
-    /// Connected DrinkOn Peripheral
-    //@Published var drinkOnPeripheral : DrinkOnPeripheral? = DrinkOnKit.sharedInstance.drinkOnPeripheral
-
-    /// Connected DrinkOn Peripheral DrinkOnService
-    //@Published var drinkOnService : DrinkOnService? = DrinkOnKit.sharedInstance.drinkOnPeripheral?.drinkOnService
-    
-    //@Published var bottleLevel : Int = DrinkOnKit.sharedInstance.drinkOnPeripheral?.drinkOnService?.bottleLevel
-    
-    /*
-    let drinkOnPeripheral : DrinkOnPeripheral? = DrinkOnKit.sharedInstance.drinkOnPeripheral
-    var cancellable = drinkOnPeripheral.objectWillChange
-        .sink { _ in
-            print("******* Peripheral " + DrinkOnKit.sharedInstance.drinkOnPeripheral.debugDescription)
-    }
-    */
-    
     
     /// Currently Scanning for DrinkOn Peripherals?
     @Published var scanning = false {  // currently scanning?
         didSet {
-            print("Scanning DidSet: " + scanning.description)
+            //print("Scanning DidSet: " + scanning.description)
             if(scanning) {
                 drinkOnKit.scanForPeripherals(clearScannedPeripherals: true)
             } else {

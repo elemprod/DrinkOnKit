@@ -18,23 +18,20 @@ struct LogCharacteristicView: View {
     var characteristicData : DrinkOnLogCharacteristic
     
     var body: some View {
-        List{
-            Section(header: LevelSensorCharListHeader()) {
-                ForEach(characteristicData.log) { logPoint in
-                    HStack {
-                        if(logPoint.hour == 0) {
-                            Text("Now")
-                        } else {
-                            Text(String(format: "minus %d hours", logPoint.hour))
-                        }
-                        
-                        Spacer()
-                        Text(String(format: "%1.1f", logPoint.consumed))
+        Section(header: LevelSensorCharListHeader()) {
+            ForEach(characteristicData.log) { logPoint in
+                HStack {
+                    if(logPoint.hour == 0) {
+                        Text("Now")
+                    } else {
+                        Text(String(format: "minus %d hours", logPoint.hour))
                     }
+                    
+                    Spacer()
+                    Text(String(format: "%1.1f", logPoint.consumed))
                 }
             }
         }
-        
     }
 }
 
