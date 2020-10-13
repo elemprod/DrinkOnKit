@@ -82,23 +82,6 @@ public enum DrinkOnKitState : Int {
     }
 }
 
-
-
-
-/// DrinkOnKit Delegate
-@available(iOS 13.0, *)
-public protocol DrinkOnKitDelegate: class {
-    
-    /**
-     * Connected to a DrinkOnPeripheral
-     *
-     * - Parameter drinkOnKit:              The DrinkOnKit.
-     * - Parameter drinkOnPeriperal:        The Connected Peripheral
-     */
-    func drinkOnKit(_ drinkOnKit: DrinkOnKit, didConnect : DrinkOnPeripheral)
-}
-
-
 /*
  * A high level Library Module for acessing DrinkOn Peripherals via Bluetooth Low Energy
  *
@@ -132,9 +115,6 @@ public protocol DrinkOnKitDelegate: class {
     
     /// Shared Instance
     public static let sharedInstance = DrinkOnKit()
-    
-    /// DrinkOnKit Delegate
-    public weak var delegate : DrinkOnKitDelegate?
     
     /// The public library state.  Published on the main thread on stateInternal change.
     @Published public var state : DrinkOnKitState = DrinkOnKitState.unknown
@@ -259,10 +239,11 @@ public protocol DrinkOnKitDelegate: class {
         if(self.bleAccessCheck()) {               // Attempt Connection
             stateInternal = .connecting
             print("Connecting to: \(peripheral.debugDescription)")
+            
             CentralManager.sharedInstance.connectPeripheral(peripheral)
             
+            // Update the observable peripheral state
             DispatchQueue.main.async {
-                //self.drinkOnPeripheral = peripheral
                 peripheral.state = peripheral.peripheral.state
             }
             
@@ -361,8 +342,7 @@ public protocol DrinkOnKitDelegate: class {
             if let scannedDrinkOnPeripheral = self.scannedDrinkOnPeripherals.get(peripheral: peripheral.peripheral) {
                 scannedDrinkOnPeripheral.peripheral.connected = true;   // Update the matching scanned peripheral connection state
             }
-            peripheral.state = peripheral.peripheral.state
-            self.delegate?.drinkOnKit(self, didConnect: peripheral)
+            
         }
 
     }

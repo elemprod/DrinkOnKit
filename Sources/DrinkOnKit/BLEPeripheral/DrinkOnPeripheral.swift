@@ -168,6 +168,10 @@ public struct DrinkOnPeripheralOptions: OptionSet {
          self.rawValue = rawValue
      }
     
+    /// Disable automatic disconnection from the DrinkOn Peripheral once the specificed characteristics
+    /// have been read.  The app is responsible for manually disconnecting the peripheral when this option.
+    public static let disableDisconnect  = DrinkOnPeripheralOptions(rawValue: 1 << 0)
+    
     /// Read the Status Characteristic after the connection is established.
     public static let readStatusChar    = DrinkOnPeripheralOptions(rawValue: 1 << 1)
     
@@ -184,10 +188,6 @@ public struct DrinkOnPeripheralOptions: OptionSet {
     /// Read the Log Characteristic after the connection is established.
     public static let readLogChar  = DrinkOnPeripheralOptions(rawValue: 1 << 5)
     
-    /// Disable automatic disconnection from the DrinkOn Peripheral once the specificed characteristics
-    /// have been read.  The app is responsible for manually disconnecting the peripheral when this option.
-    public static let disableDisconnect  = DrinkOnPeripheralOptions(rawValue: 1 << 0)
-    
     /// Combined Optionset to Read All Characteristics and then disconnect from the Peripheral
     public static let readAll : DrinkOnPeripheralOptions = [.readStatusChar, .readInfoChar, .readLevelSensorChar, .readLogChar]
     
@@ -195,11 +195,40 @@ public struct DrinkOnPeripheralOptions: OptionSet {
     public static let enableLevelSensorNotifications : DrinkOnPeripheralOptions = [.readStatusChar, .readInfoChar, .notifyLevelSensorChar, .readLogChar, .disableDisconnect]
 }
 
+/***
+ OptionSet for tracking whether  characteristics have been read and if notifications were enabled
+ *
+ * Note that the info characteristic updated status is not tracked here.  Since the data is static, we only need to
+ * read it once and can therefore simply nil check the characteristic value to detemine if it has been previously read.
+ */
+public struct DrinkOnCharStatus: OptionSet {
+    public let rawValue: Int
+
+    public init(rawValue: Int) {
+         self.rawValue = rawValue
+     }
+
+    /// Has the Status Characteristic been read?
+    public static let statusCharUpdated    = DrinkOnCharStatus(rawValue: 1 << 0)
+    
+    /// Has the Level Sensor Characteristic been read?
+    public static let levelSensorCharUpdated   = DrinkOnCharStatus(rawValue: 1 << 1)
+    
+    /// Have the Level Sensor Characteristic Notificatons been enabled?
+    public static let levelSensorCharNotificationsEnabled   = DrinkOnCharStatus(rawValue: 1 << 2)
+    
+    /// Has the Log Characteristic been enabled?
+    public static let logCharUpdated  = DrinkOnCharStatus(rawValue: 1 << 3)
+    
+    /// Combined Optionset with No Options Set
+    public static let none : DrinkOnCharStatus = []
+        
+}
+
 /// Data Object representing a DrinkOn BLE Peripheral
 @available(iOS 13.0, *)
 public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeripheralDelegate, DrinkOnServiceDelegate {
 
-    
     /// Uniquie ID number for the object
     public let id = UUID()
     
@@ -218,6 +247,9 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     /// Liquid Consumption LOg Characteristic Data
     @Published public internal(set) var logCharacteristic : DrinkOnLogCharacteristic? = nil
     
+    /// The last BLE signal strength measurement
+    @Published public internal(set) var RSSI : NSNumber?
+    
     /// Function for setting a new 24 hr liquid consumption gload with units of Bottls.
     public func goal24hrSet(goal : Float) {
         //TODO
@@ -226,6 +258,9 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     
     /// Connection Options for the Peripheral
     public var options: DrinkOnPeripheralOptions
+    
+    // Characteristic status.
+    private var charStatus : DrinkOnCharStatus = .none
     
     /// Connect the Peripheral
     public func connect() {
@@ -238,11 +273,35 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         DrinkOnKit.sharedInstance.connectPeripheral(self)
     }
     
+    
+    /// Should the peripheral disconnect after notifications are disabled?
+    private var disconnectQued : Bool = false
+    
+    /// Function for disabling peripheral notifications
+    /// returns: true if the notifications disable was qued else false if there were no notifications to disable
+    public func disableNotifications() -> Bool {
+        
+        guard let drinkOnService = self.drinkOnService else {
+            return false
+        }
+        
+        if drinkOnService.levelSensorCharNotificationsEnabled() {
+            drinkOnService.levelSensorCharNotifications(enable: false)
+            return true
+        }
+        return false
+    }
     /// Disconnect the Peripheral
     public func disconnect() {
+        
+        // Disable notifications prior to disconnecting if required
+        if self.disableNotifications() {
+            disconnectQued = true
+            return
+        }
+        
         DrinkOnKit.sharedInstance.disconnectPeripheral(self)
     }
-    
     
     /// Supported Service UUID's.
     fileprivate let serviceUUIDs                                        = [DrinkOnServiceIdentifiers.ServiceUUID]
@@ -253,17 +312,12 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     /// The CoreBluetooth Peripheral
     public internal(set) var peripheral : CBPeripheral
     
-
-    
-    /// Peripheral Initializer.
-    public init(_ peripheral: CBPeripheral) {
-        self.peripheral = peripheral
-        self.state = peripheral.state
-        self.options = DrinkOnPeripheralOptions.readAll         // set default option
-        //print("Init: \(peripheral)")
+    /// Initializer with a peripheral
+    public convenience init(_ peripheral: CBPeripheral) {
+        self.init(peripheral, options: DrinkOnPeripheralOptions.readAll)
     }
     
-    /// Peripheral Initializer with connection options.
+    /// Initializer with a peripheral and connection options.
     public init(_ peripheral: CBPeripheral, options: DrinkOnPeripheralOptions) {
         self.peripheral = peripheral
         self.state = peripheral.state
@@ -271,9 +325,6 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         //print("Init: \(peripheral)")
     }
     
-    // Was the connection attempt sucessful?
-    internal var connectionSucceeded: Bool = false
-        
     /**
      * Start Discovery of All Supported Services
      */
@@ -283,17 +334,57 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         peripheral.discoverServices(serviceUUIDs)
     }
     
-    /// The last BLE signal strength measurement
-    public var RSSI : NSNumber? {
-        return _RSSI
+    /// Function for checking if all of the characteristics selected in the options have been read
+    /// and  automatically disconnecting if so
+    private func autoDisconnectCheck() {
+        
+        if options.contains(.disableDisconnect) {   // auto disconnect disabled
+            return
+        }
+        if options.contains(.readInfoChar) && infoCharacteristic == nil {
+            return
+        }
+        if options.contains(.readLevelSensorChar) && !charStatus.contains(.levelSensorCharUpdated) {
+            return
+        }
+        if options.contains(.readStatusChar) && !charStatus.contains(.statusCharUpdated) {
+            return
+        }
+        if options.contains(.readLogChar) && !charStatus.contains(.logCharUpdated) {
+            return
+        }
+        if options.contains(.enableLevelSensorNotifications) && !charStatus.contains(.levelSensorCharUpdated) {
+            // make sure there was at least one update if level sensor notifications were enabled
+            return
+        }
+        
+        // all characteristics have been read so disconnect
+        self.disconnect()
     }
     
-    fileprivate var _RSSI : NSNumber? = nil {
-        didSet(newValue){
-            guard let newRSSI = newValue else {
-                return
-            }
-            //delegate?.peripheral(self, didUpdateRSSI: newRSSI)
+    //MARK: CentralManager Update Functions
+    
+    /// Function to be called after the CentralManager Disconnects from the Peripheral
+    internal func didDisconnect() {
+        // The peripherals services [CBService] and characteristics [CBCharacteristic] are invalidated on disconnect
+        self.drinkOnService = nil
+        disconnectQued = false
+        
+        DispatchQueue.main.async {
+            self.state = self.peripheral.state  // Update the observable state
+        }
+    }
+    
+    /// Function to be called after the CentralManager Connects with the Peripheral
+    internal func didConnect() {
+        
+        // Clear the Characteristic Read & Notify Status
+        charStatus = .none
+        disconnectQued = false
+        
+        self.startServiceDiscovery()
+        DispatchQueue.main.async {
+            self.state = self.peripheral.state  // Update the observable state
         }
     }
     
@@ -323,9 +414,11 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
             print("didReadRSSI Error: \(String(describing: error))")
             return
         }
-        _RSSI = RSSI
+        
+        DispatchQueue.main.async {
+            self.RSSI = RSSI
+        }
     }
-    
     
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         print("didDiscoverServices")
@@ -341,9 +434,15 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         
         for service : CBService in services {
             if service.uuid .isEqual(DrinkOnServiceIdentifiers.ServiceUUID) {
-                let newService = DrinkOnService(service: service)       // Characteristics discovered in service init
+                // service characteristics are discovered during init
+                let newService = DrinkOnService(service: service)
                 self.drinkOnService = newService
                 self.drinkOnService?.delegate = self
+                var modifiedOptions = self.options
+                if self.infoCharacteristic != nil {
+                    modifiedOptions.remove(.readInfoChar)   // don't read info if previously read
+                }
+                self.drinkOnService?.discoverCharacteristics(modifiedOptions)
                 print("DrinkOn Service discovered")
             } else {
                 print("Unrecognized Service")
@@ -362,7 +461,8 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
         }
         // Call the discover characteristic methods for the matching service.
         if service === drinkOnService?.service {
-            drinkOnService?.didDiscoverCharacteristics(characteristics: characteristics)
+            // The characteristic value is read if selected in the options
+            drinkOnService?.didDiscoverCharacteristics(characteristics: characteristics, options : self.options)
         } else {
             print("Service Unrecognized: \(service)")
         }
@@ -436,27 +536,36 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     
     //MARK: DrinkOnService Delegate
     func drinkOnService(_ service: DrinkOnService, didUpdateStatusChar data: DrinkOnStatusCharacteristic) {
+        charStatus.insert(.statusCharUpdated)
+        autoDisconnectCheck()
         DispatchQueue.main.async {
-            //print("****** Status Updated *****")
+            print("Status Char Updated")
             self.statusCharacteristic = data
         }
     }
     
     func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar data: DrinkOnLevelSensorCharacteristic) {
+        charStatus.insert(.levelSensorCharUpdated)
+        autoDisconnectCheck()
         DispatchQueue.main.async {
+            print("Level Sensor Char Updated")
             self.levelSensorCharacteristic = data
         }
     }
     
     func drinkOnService(_ service: DrinkOnService, didUpdateInfoChar data: DrinkOnInfoCharacteristic) {
-        // Don't need check if changed since the char is only read once
+        autoDisconnectCheck()
         DispatchQueue.main.async {
+            print("Info Char Updated")
             self.infoCharacteristic = data
         }
     }
     
     func drinkOnService(_ service: DrinkOnService, didUpdateLogChar data: DrinkOnLogCharacteristic, offsett: Int) {
+        charStatus.insert(.logCharUpdated)
+        autoDisconnectCheck()
         DispatchQueue.main.async {
+            print("Log Char Updated")
             // If the offsett is 0, just update the characterstic data with the new log
             if(offsett == 0) {
                 self.logCharacteristic = data
@@ -475,6 +584,17 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
             }
             
         }
+    }
+    
+    func drinkOnService(_ service: DrinkOnService, didEnableLevelSensorCharNotification enabled: Bool) {
+        if enabled {
+            charStatus.insert(.levelSensorCharNotificationsEnabled)
+        } else if disconnectQued {
+            self.disconnect()
+            return
+        }
+        
+        autoDisconnectCheck()
     }
 
 }

@@ -31,44 +31,6 @@ internal class DrinkOnServiceIdentifiers: NSObject {
     static let LogCharUUID                          = CBUUID(string: LogCharUUIDString)
 }
 
-/**
- * Bit array enumeration for storing the BLE status for the DrinkOn Service Chracateristics.
- * Used to protect the device from too frequent BLE's accesses and validating characteristics.
- *
- * _Discovered indicates the characteristic was discovered and is valid.
- * _Valid indicates the characteristic was discovered and is valid.
- * _ReadLocked indicates the Charactersitic was recently Read
- * _WriteLocked indicates a Characteristic Write is in progress.
- * _NotificationEn indicates Notifications are Enabled for a Characteristic
- */
-fileprivate struct DrinkOnServiceCharState: OptionSet {
-    let rawValue: Int
-    
-    // Status Characteristic State
-    static let statusDiscovered                  = DrinkOnServiceCharState(rawValue: 1 << 0)
-    static let statusValid                       = DrinkOnServiceCharState(rawValue: 1 << 1)
-    static let statusReadLocked                  = DrinkOnServiceCharState(rawValue: 1 << 2)
-    static let statusWriteLocked                 = DrinkOnServiceCharState(rawValue: 1 << 3)
-    
-    // Level Sensor Characteristic State
-    static let levelSensorDiscovered            = DrinkOnServiceCharState(rawValue: 1 << 4)
-    static let levelSensorValid                 = DrinkOnServiceCharState(rawValue: 1 << 5)
-    static let levelSensorReadLocked            = DrinkOnServiceCharState(rawValue: 1 << 6)
-    static let levelSensorNotificationEn        = DrinkOnServiceCharState(rawValue: 1 << 7)
-    
-    // Info Characteristic State
-    static let infoDiscovered                   = DrinkOnServiceCharState(rawValue: 1 << 8)
-    static let infoRead                         = DrinkOnServiceCharState(rawValue: 1 << 10)
-    
-    // Log Characteristic State
-    static let logDiscovered                 = DrinkOnServiceCharState(rawValue: 1 << 11)
-    static let logValid                      = DrinkOnServiceCharState(rawValue: 1 << 12)
-    static let logReadLocked                 = DrinkOnServiceCharState(rawValue: 1 << 13)
-    
-}
-
-
-
 /// Service Delegate
 @available(iOS 10.0, *)
 internal protocol DrinkOnServiceDelegate: class {
@@ -90,6 +52,14 @@ internal protocol DrinkOnServiceDelegate: class {
      */
     func drinkOnService(_ service: DrinkOnService, didUpdateLevelSensorChar  data : DrinkOnLevelSensorCharacteristic)
     
+    
+    /**
+     * The Raw Level Sensor Characteristic Notifications were Enabled or Disabled.
+     *
+     * - Parameter service:                 The DrinkOnService.
+     * - Parameter enabled:                 Were notifications enabled?
+     */
+    func drinkOnService(_ service: DrinkOnService, didEnableLevelSensorCharNotification enabled : Bool)
     /**
      * The Info Characteristic was updated.
      *
@@ -128,38 +98,12 @@ public class DrinkOnService {
     fileprivate var infoCharacteristic          : CBCharacteristic?  = nil
     fileprivate var logCharacteristic           : CBCharacteristic?  = nil
     
-    /// Characteristic status flags
-    fileprivate var charState                   : DrinkOnServiceCharState
-    
-    
-    /// Attempt to read and setup notifications for characteristics selected in the connection option set
-    /*
-    public func setupServiceWithOptions(_ options : DrinkOnPeripheralOptions) {
-
-        if options.contains(.readStatusChar) {
-            self.readStatusChar()
-        }
-        if options.contains(.readInfoChar) {
-            self.readInfoChar()
-        }
-        if options.contains(.readLevelSensorChar) {
-            self.readLevelSensorChar()()
-        }
-        if options.contains(.readLogChar) {
-            self.readLogChar()
-        }
-        
-        if options.contains(.notifyLevelSensorChar) {
-            
-        }
-    }
-    */
-    
     /**
      * Function for initiating a BLE Read of the Level Characteristic Value
      *  - returns: true if the service was previously discovered and has read access, else false.
     */
     public func readStatusChar() -> Bool {
+        print("Reading Status Char")
         guard let statusChar = self.statusCharacteristic else {
             print("Status Characteristic Nil")
             let characteristics = [DrinkOnServiceIdentifiers.StatusCharUUID]
@@ -174,7 +118,6 @@ public class DrinkOnService {
             return false
         }
     }
-    
     
     /**
      * Function for handling a Status Characteristic write and making the delegate call.
@@ -216,12 +159,13 @@ public class DrinkOnService {
      *  - returns: true if the service was previously discovered and has read access, else false.
     */
     public func readLevelSensorChar() -> Bool {
+        print("Reading Level Char")
         guard let levelSensorChar = self.levelSensorCharacteristic else {
             let characteristics = [DrinkOnServiceIdentifiers.LevelSensorCharUUID]
             self.peripheral.discoverCharacteristics(characteristics, for: self.service)
             return false
         }
-        if(levelSensorChar.properties.contains(.read)) {
+        if levelSensorChar.properties.contains(.read) {
             levelSensorChar.service.peripheral.readValue(for: levelSensorChar)
             return true
         } else {
@@ -229,21 +173,41 @@ public class DrinkOnService {
             return false
         }
     }
-    
     /**
-     * Function for Iniating an Enable / Disable of Level Sensor Characteristic Notifications
-     *  - returns: true if the update was sucessful else false.
+     * Function for checking if  Level Sensor Characteristic Notifications are enabled
+     *  - returns: true if notifications are currently enabled
     */
-    public func notifyLevelSensorChar() -> Bool {
+    public func levelSensorCharNotificationsEnabled() -> Bool {
         
         guard let levelSensorChar = self.levelSensorCharacteristic else {
-            let characteristics = [DrinkOnServiceIdentifiers.LevelSensorCharUUID]
-            self.peripheral.discoverCharacteristics(characteristics, for: self.service)
+            print("Level Sensor Char. Not Discovered")
             return false
         }
+     
+        return levelSensorChar.isNotifying
+    }
+    
+    /**
+     * Function for Initiating  an Enable / Disable of the Level Sensor Characteristic Notifications
+     *
+    */
+    public func levelSensorCharNotifications(enable : Bool) {
         
-        //TODO
-        return true
+        guard let levelSensorChar = self.levelSensorCharacteristic else {
+            print("Level Sensor Char. Not Discovered")
+            return
+        }
+    
+        guard levelSensorChar.properties.contains(.notify) else {
+            print("Level Sensor Char. Missing Notify Access")
+            return
+        }
+        
+        if enable == levelSensorChar.isNotifying {
+            return     // Already enabled / disabled - nothing to do
+        }
+        
+        levelSensorChar.service.peripheral.setNotifyValue(enable, for: levelSensorChar)
     }
     
     /**
@@ -267,13 +231,12 @@ public class DrinkOnService {
         return true
     }
     
-
-    
     /**
      * Function for initiating a BLE Read of the Info Characteristic Value
      *  - returns: true if the service was previously discovered and has read access, else false.
     */
     public func readInfoChar() -> Bool {
+        print("Reading Info Char")
         guard let infoChar = self.infoCharacteristic else {
             let characteristics = [DrinkOnServiceIdentifiers.InfoCharUUID]
             self.peripheral.discoverCharacteristics(characteristics, for: self.service)
@@ -325,6 +288,7 @@ public class DrinkOnService {
      *  - returns: true if the service was previously discovered and has read access, else false.
     */
     public func readLogChar() -> Bool {
+        print("Reading Log Char")
         guard let logChar = self.logCharacteristic else {
             let characteristics = [DrinkOnServiceIdentifiers.LogCharUUID]
             self.peripheral.discoverCharacteristics(characteristics, for: self.service)
@@ -385,21 +349,41 @@ public class DrinkOnService {
      *
      * - parameter service: The Central Manager supplied service reference.
      */
-    internal init(service: CBService) {
+    internal init(service: CBService)  {
         self.service = service
-        charState = []
-        
-        // Discover all of the Service Characteristics at Init
-        let characteristics = [DrinkOnServiceIdentifiers.StatusCharUUID, DrinkOnServiceIdentifiers.LevelSensorCharUUID, DrinkOnServiceIdentifiers.InfoCharUUID, DrinkOnServiceIdentifiers.LogCharUUID]
-        service.peripheral.discoverCharacteristics(characteristics, for: service)
     }
     
+    internal func discoverCharacteristics(_ options : DrinkOnPeripheralOptions) {
+        var characteristics : [CBUUID] = []
+        
+        if options.contains(.readStatusChar) {
+            characteristics.append(DrinkOnServiceIdentifiers.StatusCharUUID)
+        }
+        
+        if options.contains(.readInfoChar) {
+            characteristics.append(DrinkOnServiceIdentifiers.InfoCharUUID)
+        }
+        
+        if options.contains(.readLevelSensorChar) || options.contains(.notifyLevelSensorChar){
+            characteristics.append(DrinkOnServiceIdentifiers.LevelSensorCharUUID)
+        }
+        
+        if options.contains(.readLogChar) {
+            characteristics.append(DrinkOnServiceIdentifiers.LogCharUUID)
+        }
+        
+        if characteristics.count > 0 {
+            self.service.peripheral.discoverCharacteristics(characteristics, for: self.service)
+        } else {
+            print("*** No Characteristics Selected")
+        }
+    }
     /**
      * The function handles service characteristic discovery call backs from the BLE Central Mananger.
      *
      * - parameter characteristics: An array of discovered characteristics.
      */
-    internal func didDiscoverCharacteristics(characteristics: [CBCharacteristic]) {
+    internal func didDiscoverCharacteristics(characteristics: [CBCharacteristic], options : DrinkOnPeripheralOptions) {
         
         // Save the discovered Characteristic Reference
         for characteristic : CBCharacteristic in characteristics {
@@ -407,22 +391,36 @@ public class DrinkOnService {
             case DrinkOnServiceIdentifiers.StatusCharUUID:
                 self.statusCharacteristic = characteristic
                 print("Status Characteristic Discovered")
-                _ = self.readStatusChar()
+
+                if options.contains(.readStatusChar) {
+                    _ = self.readStatusChar()
+                }
                 
             case DrinkOnServiceIdentifiers.LevelSensorCharUUID:
                 self.levelSensorCharacteristic = characteristic
                 print("Level Sensor Characteristic Discovered")
-                _ = self.readLevelSensorChar()
+                
+                if options.contains(.readLevelSensorChar) {
+                    _ = self.readLevelSensorChar()
+                }
+                if options.contains(.notifyLevelSensorChar) {
+                    self.levelSensorCharNotifications(enable: true)
+                }
+
                 
             case DrinkOnServiceIdentifiers.InfoCharUUID:
                 self.infoCharacteristic = characteristic
                 print("Info Characteristic Discovered")
-                _ = self.readInfoChar()
+                if options.contains(.readInfoChar) {
+                    _ = self.readInfoChar()
+                }
                 
             case DrinkOnServiceIdentifiers.LogCharUUID:
                 self.logCharacteristic = characteristic
                 print("Log Characteristic Discovered")
-                _ = self.readLogChar()
+                if options.contains(.readLogChar) {
+                    _ = self.readLogChar()
+                }
                 
             default:
                 print("didDiscoverCharacteristicsFor - Unrecognized Characteristic \(characteristic.debugDescription)")
@@ -439,21 +437,22 @@ public class DrinkOnService {
         
         if characteristic === self.statusCharacteristic {
             _ = processStatusCharUpdate()
-            print("Status Char Read")
+            print("Status Char Update")
             
         } else if characteristic === self.levelSensorCharacteristic {
             _ = processLevelSensorCharUpdate()
-            print("Level Sensor Char. Read")
+            print("Level Sensor Char. Update")
             
         } else if characteristic === self.infoCharacteristic {
             _ = processInfoCharUpdate()
-            print("Info Char Read")
+            print("Info Char Update")
             
         } else if characteristic === self.logCharacteristic {
             _ = processLogCharUpdate()
-            print("Log Char Read")
+            print("Log Char Update")
+        } else {
+            print("Unknown Characteristic")
         }
-        
     }
     
     /**
@@ -471,9 +470,15 @@ public class DrinkOnService {
      * - parameter characteristic:          The characteristic
      */
     internal func didUpdateNotificationStateFor(characteristic: CBCharacteristic) {
-        //TODO set the notification state flags
+
+        if characteristic === self.levelSensorCharacteristic {
+            self.delegate?.drinkOnService(self, didEnableLevelSensorCharNotification: characteristic.isNotifying)
+            print("Level Sensor  Notification Status Update")
+            
+        } else {
+            print("Unknown Characteristic Notification Change")
+        }
     }
-    
     
 }
 

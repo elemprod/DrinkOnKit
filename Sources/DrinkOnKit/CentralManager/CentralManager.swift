@@ -289,35 +289,10 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
         }
         
         if(peripheral === drinkOnPeripheral.peripheral) {
-            // The connected Peripheral is the same as the selected peripheral
-            if let drinkOnService = drinkOnPeripheral.drinkOnService {
-                // DrinkOn Service previously discover, read selected characteristics
-                
-                if drinkOnPeripheral.options.contains(.readStatusChar) {
-                    _ = drinkOnService.readStatusChar()
-                }
-                if drinkOnPeripheral.options.contains(.readInfoChar) {
-                    _ = drinkOnService.readInfoChar()
-                }
-                if drinkOnPeripheral.options.contains(.readLevelSensorChar) {
-                    _ = drinkOnService.readLevelSensorChar()
-                }
-                if drinkOnPeripheral.options.contains(.notifyLevelSensorChar) {
-                    _ = drinkOnService.notifyLevelSensorChar()
-                }
-                
-                if drinkOnPeripheral.options.contains(.readLogChar) {
-                    _ = drinkOnService.readLogChar()
-                }
-            } else {
-                // DrinkOn Service was not previously discovered, start discovery.
-                drinkOnPeripheral.startServiceDiscovery()
-            }
-        
+            drinkOnPeripheral.didConnect()
             delegate?.centralManager(self, didConnect: drinkOnPeripheral)
-            
         } else {
-            print("Unknown Peripheral Discovered")
+            print("Unknown Peripheral Connected")
         }
         
     }
@@ -355,6 +330,7 @@ internal class CentralManager: NSObject, ObservableObject, CBCentralManagerDeleg
             return
         }
         if(peripheral === drinkOnPeripheral.peripheral) {
+            drinkOnPeripheral.didDisconnect()
             delegate?.centralManager(self, didDisconnect: drinkOnPeripheral)
         }
     }
