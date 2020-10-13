@@ -277,9 +277,16 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     /// Should the peripheral disconnect after notifications are disabled?
     private var disconnectQued : Bool = false
     
+    public func levelSensorNotificationsEnable(_ enable : Bool) {
+        guard let drinkOnService = self.drinkOnService else {
+            return
+        }
+        drinkOnService.levelSensorCharNotifications(enable: enable)
+    }
+    
     /// Function for disabling peripheral notifications
     /// returns: true if the notifications disable was qued else false if there were no notifications to disable
-    public func disableNotifications() -> Bool {
+    private func disableAllNotifications() -> Bool {
         
         guard let drinkOnService = self.drinkOnService else {
             return false
@@ -295,7 +302,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     public func disconnect() {
         
         // Disable notifications prior to disconnecting if required
-        if self.disableNotifications() {
+        if self.disableAllNotifications() {
             disconnectQued = true
             return
         }

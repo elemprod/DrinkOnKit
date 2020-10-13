@@ -35,21 +35,20 @@ struct DrinkOnPeripheralView: View {
         
         VStack {
             List {
-                Unwrap(self.drinkOnPeripheral.statusCharacteristic) { charData in
-                    StatusCharacteristicView(characteristicData: charData)
+                Unwrap(self.drinkOnPeripheral.statusCharacteristic) { statusCharData in
+                    StatusCharacteristicView(characteristicData: statusCharData)
                 }
                 
-                
-                Unwrap(drinkOnPeripheral.infoCharacteristic) { charData in
-                    InfoCharacteristicView(characteristicData: charData)
+                Unwrap(drinkOnPeripheral.infoCharacteristic) { infoCharData in
+                    InfoCharacteristicView(characteristicData: infoCharData)
                 }
                 
-                Unwrap(drinkOnPeripheral.levelSensorCharacteristic) { levelSensorChar in
-                    LevelSensorCharacteristicView(characteristicData: levelSensorChar)
+                Unwrap(drinkOnPeripheral.levelSensorCharacteristic) { levelSensorCharData in
+                    LevelSensorCharacteristicView(drinkOnPeripheral: drinkOnPeripheral, characteristicData: levelSensorCharData)
                 }
                 
-                Unwrap(drinkOnPeripheral.logCharacteristic) { logChar in
-                    LogCharacteristicView(characteristicData: logChar)
+                Unwrap(drinkOnPeripheral.logCharacteristic) { logCharData in
+                    LogCharacteristicView(characteristicData: logCharData)
                 }
             }
             
