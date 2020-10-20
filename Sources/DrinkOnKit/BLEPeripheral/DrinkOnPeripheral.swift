@@ -253,7 +253,7 @@ public class DrinkOnPeripheral: NSObject, Identifiable, ObservableObject, CBPeri
     /// Function for setting a new 24 hr liquid consumption gload with units of Bottls.
     public func goal24hrSet(goal : Float) {
         //TODO
-        
+        // value check, convert to uint8, send
     }
     
     /// Connection Options for the Peripheral

@@ -120,7 +120,7 @@ public class DrinkOnService {
     }
     
     /**
-     * Function for handling a Status Characteristic write and making the delegate call.
+     * Function for handling a Status Characteristic update and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processStatusCharUpdate() -> Bool {
@@ -130,7 +130,7 @@ public class DrinkOnService {
         }
         guard let data = statusChar.value,
               data.count == 10,
-              let newGoal24hr24hrRaw : Int8 = data.int8ValueAt(index: 0),
+              let newGoal24hr24hrRaw : UInt8 = data.uint8ValueAt(index: 0),
               let newBottleLevelRaw : Int8 = data.int8ValueAt(index: 1),
               let newConsumed24hrRaw : Float = data.floatValueAt(index: 2),
               let newUIStateCodeRaw : UInt8 = data.uint8ValueAt(index: 6),
@@ -211,7 +211,7 @@ public class DrinkOnService {
     }
     
     /**
-     * Function for processing a Level Sensor Characteristic write and making the delegate call.
+     * Function for processing a Level Sensor Characteristic update and making the delegate call.
      *  - returns: true if the service was previously discovered and has read access, else false.
     */
     fileprivate func processLevelSensorCharUpdate() -> Bool {
@@ -252,7 +252,7 @@ public class DrinkOnService {
     }
     
     /**
-     * Function for processing a Info Characteristic write and making the delegate call.
+     * Function for processing a Info Characteristic update and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processInfoCharUpdate() -> Bool {
@@ -305,7 +305,7 @@ public class DrinkOnService {
     
     
     /**
-     * Function for processing a Log Characteristic write and making the delegate call.
+     * Function for processing a Log Characteristic update and making the delegate call.
      *  - returns: true if the update was sucessful else false.
     */
     fileprivate func processLogCharUpdate() -> Bool {
